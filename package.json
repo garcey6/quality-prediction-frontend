@@ -1,0 +1,22 @@
+{
+  "name": "quality-prediction-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@antv/graphin": "^3.0.4",
+    "vue": "^3.5.13",
+    "vue-draggable-resizable": "^3.0.0",
+    "vue-draggable-resizable-next": "^1.0.7",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.2.0"
+  }
+}

@@ -1,0 +1,1 @@
+export const predictQuality = (data) => axios.post('/predict/', data);
