@@ -151,30 +151,6 @@ export default {
         resizable: true, 
       })
       console.log('新节点:', node)
-      // 新增点击事件监听
-      node.on('click', async ({ cell }) => {
-        if (moduleData.type === 'dataImport') {
-          await this.handleDataImport(cell.id)
-        }
-      })
-      },
-      // 新增数据导入处理方法
-      async handleDataImport(nodeId) {
-        try {
-          const response = await this.$http.get('/api/data-source', {
-            params: { nodeId }
-          })
-          
-          this.$emit('data-import', {
-            nodeId,
-            data: response.data,
-            position: this.graph.getCellById(nodeId).getPosition()
-          })
-          
-        } catch (error) {
-          console.error('数据源请求失败:', error)
-          this.$message.error('获取数据源配置失败')
-        }
       }
     }
 }
