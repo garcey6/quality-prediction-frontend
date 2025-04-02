@@ -1,5 +1,16 @@
 <template>
-  <div class="container">
+  <div>
+    <!-- 新增顶部导航栏 -->
+    <div class="top-navbar">
+      <div class="nav-title">间歇过程质量预测系统</div>
+      <div class="nav-buttons">
+        <button class="nav-button">首页</button>
+        <button class="nav-button">我的</button>
+        <button class="nav-button">退出</button>
+      </div>
+    </div>
+    
+    <div class="container">
     <!-- 左侧模块面板 -->
     <div class="module-panel">
       <div 
@@ -26,6 +37,7 @@
         @updatePosition="updateModulePosition"
         @delete="handleDeleteModule"/>
     </div>
+  </div>
   </div>
 </template>
 
@@ -54,7 +66,8 @@ export default {
       activeModules: [],
       nextId: 0,
       connections: [],
-      selectedModule: null
+      selectedModule: null,
+      graph: new Map(), // 使用图结构存储连接关系
     };
   },
   methods: {
@@ -90,24 +103,40 @@ export default {
       // 这个方法需要在FlowCanvas中实现连线绘制
       this.$refs.flowCanvas.drawConnections(this.connections);
     },
-    handleNodeClick(module) {
+    handleNodeClick({ id, side }) {
       if (!this.selectedModule) {
-        this.selectedModule = module;
+        // 选择起始节点
+        this.selectedModule = { id, side };
         this.activeModules.forEach(m => {
-          m.isSelected = m.id === module.id;
+          m.isSelected = m.id === id;
         });
-      } else if (this.selectedModule.id !== module.id) {
-        this.connections.push({
-          from: this.selectedModule.id,
-          to: module.id,
-          fromSide: this.selectedSide,
-          toSide: 'top' // 默认连接到目标模块顶部
-        });
+      } else {
+        // 创建连接关系
+        const source = this.selectedModule;
+        const target = { id, side };
+        
+        // 检查是否已存在连接
+        const existingConnections = this.graph.get(source.id) || [];
+        if (!existingConnections.some(conn => conn.target === target.id)) {
+          // 更新图结构
+          this.graph.set(source.id, [...existingConnections, { 
+            target: target.id, 
+            sourceSide: source.side,
+            targetSide: target.side 
+          }]);
+          
+          // 更新可视化连接
+          this.connections.push({
+            from: source.id,
+            to: target.id,
+            fromSide: source.side,
+            toSide: target.side
+          });
+        }
+        
+        // 重置选择状态
         this.selectedModule = null;
-        this.selectedSide = null;
-        this.activeModules.forEach(m => {
-          m.isSelected = false;
-        });
+        this.activeModules.forEach(m => m.isSelected = false);
       }
     },
     handleModuleDblClick(module) {
@@ -135,14 +164,67 @@ export default {
         m.isSelected = m.id === id;
       });
     }
+    ,
+    // 新增：获取节点的连接关系
+    getConnections(nodeId) {
+      return this.graph.get(nodeId) || [];
+    }
+    ,
+    // 新增：删除连接
+    removeConnection(connection) {
+      const connections = this.graph.get(connection.from) || [];
+      this.graph.set(connection.from, connections.filter(c => 
+        c.target !== connection.to || c.sourceSide !== connection.fromSide
+      ));
+      this.connections = this.connections.filter(c => 
+        !(c.from === connection.from && c.to === connection.to && 
+          c.fromSide === connection.fromSide)
+      );
+    }
   }
 };
 </script>
 
 <style scoped>
+/* 新增顶部导航栏样式 */
+.top-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  height: 60px;
+  background-color: #1E90FF; /* 蓝色背景 */
+  color: white; /* 白色字体 */
+}
+
+.nav-title {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.nav-button {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
 .container {
   display: flex;
-  height: 100vh;
+  height: calc(100vh - 60px); /* 减去导航栏高度 */
 }
 
 .module-panel {
@@ -179,5 +261,6 @@ export default {
   position: relative;
   background: #e9e4e4;
   overflow: auto;
+  padding: 15px;
 }
 </style>
