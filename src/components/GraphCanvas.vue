@@ -18,6 +18,10 @@ export default {
       height: this.$refs.container.clientHeight,
       grid: true,
       panning: true,
+      selecting: {
+        enabled: true,
+        showNodeSelectionBox: true
+      },
       mousewheel: {
         enabled: true,
         modifiers: ['ctrl', 'meta'],
@@ -39,30 +43,7 @@ export default {
     this.graph.on('edge:connected', ({ edge }) => {
       console.log('连线成功:', edge)
     })
-    // 修复2：修正删除按钮配置
-    this.graph.on('node:mouseenter', ({ node }) => {
-      node.addTools({
-        name: 'button-remove',
-        args: {
-          x: '100%', 
-          y: 0,
-          offset: { x: -20, y: 20 },
-          onClick: () => {
-            const edges = this.graph.getConnectedEdges(node)
-            this.graph.removeCells([node, ...edges])
-          }
-        }
-      })
-    })
-    
-    // 修复3：简化键盘删除绑定
-    this.graph.bindKey('delete', () => {
-      const cells = this.graph.getSelectedCells()
-      if (cells.length) {
-        this.graph.removeCells(cells)
-      }
-    })
-    // 添加删除支持
+    // 添加删除支持 - 修改为悬停时显示，离开时隐藏
     this.graph.on('node:mouseenter', ({ node }) => {
       node.addTools({
         name: 'button-remove',
@@ -70,27 +51,28 @@ export default {
           x: '100%',
           y: 0,
           offset: { x: -10, y: 10 },
-        },
+        }
       })
     })
-    // 保留键盘删除支持
-    this.graph.bindKey(['backspace', 'delete'], () => {
-      const cells = this.graph.getSelectedCells()
-      if (cells.length) {
-        this.graph.removeCells(cells)
-      }
-    })
     
-    // 启用框选
-    this.graph.enableSelection({
-      enabled: true,
-      showNodeSelectionBox: true
+    this.graph.on('node:mouseleave', ({ node }) => {
+      node.removeTools()
+    })
+    // 添加双击事件监听
+    this.graph.on('node:dblclick', ({ node }) => {
+      console.log('节点被双击:', node) // 添加调试日志
+      this.$emit('node-dblclick', node.getData())
     })
   },
   methods: {
     addNode(moduleData, x, y) {
       const node = this.graph.addNode({
         id: `${moduleData.type}-${Date.now()}`,
+        // 添加data属性保存模块数据
+        data: {
+          ...moduleData,  // 确保包含所有模块数据
+          id: `${moduleData.type}-${Date.now()}` // 添加唯一ID
+        },
         x,
         y,
         width: 120,
@@ -150,7 +132,7 @@ export default {
         draggable: true,
         resizable: true, 
       })
-      console.log('新节点:', node)
+      console.log('创建的新节点数据:', node.getData()) // 调试日志
       }
     }
 }
