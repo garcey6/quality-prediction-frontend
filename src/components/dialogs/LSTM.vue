@@ -1,57 +1,129 @@
 <template>
-    <div class="data-import-form">
-      <el-upload
-        action="#"
-        :auto-upload="false"
-        :show-file-list="false"
-        :on-change="handleFileChange"
-        accept=".csv">
-        <el-button type="primary">选择CSV文件</el-button>
-      </el-upload>
-      
-      <div v-if="selectedFile" class="file-info">
-        <p>已选择文件：{{ selectedFile.name }}</p>
-        <el-button 
-          type="success" 
-          @click="handleUpload"
-          :loading="uploading">
-          {{ uploading ? '上传中...' : '开始上传' }}
-        </el-button>
+  <div class="lstm-modal">
+    <div class="lstm-form">
+      <!-- 关闭按钮 -->
+      <div class="close-btn-container">
+        <span class="close-btn" @click="$emit('close')">×</span>
+      </div>
+
+      <!-- 标题 -->
+      <h3 class="dialog-title">LSTM训练设置</h3>
+
+      <div class="form-content">
+        <el-form label-position="top">
+          <el-form-item label="网络结构参数">
+            <el-input-number v-model="networkParams.hidden_size" :min="1" label="隐藏层大小"></el-input-number>
+            <el-input-number v-model="networkParams.num_layers" :min="1" :max="5" label="网络层数"></el-input-number>
+            <el-input-number v-model="networkParams.dropout" :min="0" :max="0.9" :step="0.1" label="Dropout率"></el-input-number>
+          </el-form-item>
+
+          <el-form-item label="训练参数">
+            <el-input-number v-model="trainParams.epochs" :min="1" :max="1000" label="训练轮数"></el-input-number>
+            <el-input-number v-model="trainParams.batch_size" :min="1" :max="1024" label="批大小"></el-input-number>
+            <el-input-number v-model="trainParams.learning_rate" :min="0.0001" :max="1" :step="0.0001" label="学习率"></el-input-number>
+          </el-form-item>
+
+          <el-form-item label="其他参数">
+            <el-checkbox v-model="networkParams.bidirectional">双向LSTM</el-checkbox>
+            <el-checkbox v-model="trainParams.early_stopping">早停机制</el-checkbox>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <div class="form-footer">
+        <el-button @click="$emit('cancel')">取消</el-button>
+        <el-button type="primary" @click="handleSubmit">开始训练</el-button>
       </div>
     </div>
-  </template>
-  
-  <script>
-  import { uploadData } from '../../api/data.js'
-  
-  export default {
-    data() {
-      return {
-        selectedFile: null,
-        uploading: false
-      }
-    },
-    methods: {
-      handleFileChange(file) {
-        this.selectedFile = file.raw
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      networkParams: {
+        hidden_size: 64,
+        num_layers: 1,
+        dropout: 0.2,
+        bidirectional: false
       },
-      async handleUpload() {
-        try {
-          this.uploading = true
-          const response = await uploadData(this.selectedFile)
-          this.$emit('submit', {
-            success: true,
-            data: response.data
-          })
-        } catch (error) {
-          this.$emit('submit', {
-            success: false,
-            error: error.message
-          })
-        } finally {
-          this.uploading = false
-        }
+      trainParams: {
+        epochs: 50,
+        batch_size: 32,
+        learning_rate: 0.001,
+        early_stopping: true
       }
     }
+  },
+  methods: {
+    handleSubmit() {
+      this.$emit('submit', {
+        network_params: this.networkParams,
+        train_params: this.trainParams
+      })
+    }
   }
-  </script>
+}
+</script>
+
+<style scoped>
+.lstm-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.lstm-form {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 500px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.dialog-title {
+  margin: 0 0 20px 0;
+  text-align: center;
+  color: #333;
+}
+
+.close-btn-container {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.close-btn {
+  color: #000;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: #666;
+}
+
+.form-content {
+  margin: 20px 0;
+}
+
+.form-footer {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.el-input-number {
+  margin-right: 15px;
+  margin-bottom: 10px;
+}
+</style>

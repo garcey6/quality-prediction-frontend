@@ -22,74 +22,158 @@
         @node-dblclick="handleNodeDblClick"
         @dragover.prevent />
       
-      <!-- 修改为数据导入弹窗 -->
-      <el-dialog 
-        :visible.sync="dialogVisible" 
-        title="数据导入"
-        width="50%">
-        <DataImport @submit="handleDataSubmit" />
-      </el-dialog>
+      <!-- 数据导入弹窗 -->
+      <DataImport v-if="isDataImportOpen" :node="selectedNode" @close="isDataImportOpen = false" />
+      <!-- 其他弹窗示例 -->
+      <DataVisualization v-if="isDataVisualizationOpen" :node="selectedNode" @close="isDataVisualizationOpen = false" />
+      <VariableSelection v-if="isVariableSelectionOpen" :node="selectedNode" @close="isVariableSelectionOpen = false" />
+      <Standardization v-if="isStandardizationOpen" :node="selectedNode" @close="isStandardizationOpen = false" />
+      <ExceptionHandling v-if="isExceptionHandlingOpen" :node="selectedNode" @close="isExceptionHandlingOpen = false" />
+      <FeatureSelection v-if="isFeatureSelectionOpen" :node="selectedNode" @close="isFeatureSelectionOpen = false" />
+      <FeatureExtraction v-if="isFeatureExtractionOpen" :node="selectedNode" @close="isFeatureExtractionOpen = false" />
+      <RNN v-if="isRNNOpen" :node="selectedNode" @close="isRNNOpen = false" />
+      <TCN v-if="isTCNOpen" :node="selectedNode" @close="isTCNOpen = false" />
+      <LSTM v-if="isLSTMOpen" :node="selectedNode" @close="isLSTMOpen = false" />
+      <Transformer v-if="isTransformerOpen" :node="selectedNode" @close="isTransformerOpen = false" />
+      <QualityPredictionForm v-if="isQualityPredictionFormOpen" :node="selectedNode" @close="isQualityPredictionFormOpen = false" />
     </div>
   </div>
 </template>
 
 <script>
+import { ref } from 'vue'
 import ModulePanel from '../components/ModulePanel.vue'
 import GraphCanvas from '../components/GraphCanvas.vue'
-import DataImport from '../components/dialogs/DataImport.vue' // 新增导入
+import DataImport from '../components/dialogs/DataImport.vue'
+import DataVisualization from '../components/dialogs/DataVisualization.vue'
+import VariableSelection from '../components/dialogs/VariableSelect.vue'
+import Standardization from '../components/dialogs/standardization.vue'
+import ExceptionHandling from '../components/dialogs/ExceptionHandling.vue'
+import FeatureSelection from '../components/dialogs/FeatureSelection.vue'
+import FeatureExtraction from '../components/dialogs/FeatureExtraction.vue'
+import RNN from '../components/dialogs/RNN.vue'
+import TCN from '../components/dialogs/TCN.vue'
+import LSTM from '../components/dialogs/LSTM.vue'
+import Transformer from '../components/dialogs/Transformer.vue'
+import QualityPredictionForm from '../components/dialogs/QualityPredictionForm.vue'
 
 export default {
   components: {
     ModulePanel,
     GraphCanvas,
-    DataImport // 注册组件
+    DataImport,
+    DataVisualization,
+    VariableSelection,
+    Standardization,
+    ExceptionHandling,
+    FeatureSelection,
+    FeatureExtraction,
+    RNN,
+    TCN,
+    LSTM,
+    Transformer,
+    QualityPredictionForm
   },
-  data() {
-    return {
-      dialogVisible: false,
-      selectedNode: null
-    }
-  },
-  methods: {
-    handleDragStart(event, module) {
-      event.dataTransfer.setData('module', JSON.stringify(module))
-      event.dataTransfer.effectAllowed = 'copy'
-    },
-    handleDrop(event) {
-      event.preventDefault()
-      const moduleData = event.dataTransfer.getData('module')
-      if (!moduleData) return
+  setup() {
+    const graphCanvas = ref(null);
+    const isDataImportOpen = ref(false);
+    const isDataVisualizationOpen = ref(false);
+    const isVariableSelectionOpen = ref(false);
+    const isStandardizationOpen = ref(false);
+    const isExceptionHandlingOpen = ref(false);
+    const isFeatureSelectionOpen = ref(false);
+    const isFeatureExtractionOpen = ref(false);
+    const isRNNOpen = ref(false);
+    const isTCNOpen = ref(false);
+    const isLSTMOpen = ref(false);
+    const isTransformerOpen = ref(false);
+    const isQualityPredictionFormOpen = ref(false);
+    const selectedNode = ref(null);
 
-      const module = JSON.parse(moduleData)
-      const rect = this.$refs.graphCanvas.$refs.container.getBoundingClientRect()
-      const x = event.clientX - rect.left
-      const y = event.clientY - rect.top
+    const handleDragStart = (event, module) => {
+      event.dataTransfer.setData('module', JSON.stringify(module));
+      event.dataTransfer.effectAllowed = 'copy';
+    };
 
-      this.$refs.graphCanvas.addNode(module, x, y)
-    },
-    // 新增数据导入处理
-    handleDataImport(eventData) {
-      console.log('收到数据源配置:', eventData)
-      // 这里可以打开数据源配置弹窗
-      this.$refs.dataConfigDialog.open(eventData)
-    },
+    const handleDrop = (event) => {
+      event.preventDefault();
+      const moduleData = event.dataTransfer.getData('module');
+      if (!moduleData) return;
+
+      const module = JSON.parse(moduleData);
+      const rect = graphCanvas.value.$refs.container.getBoundingClientRect(); // 使用 graphCanvas.value
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      graphCanvas.value.addNode(module, x, y); // 使用 graphCanvas.value
+    };
+
     // 处理节点双击事件
-    handleNodeDblClick(nodeData) {
-      this.selectedNode = null // 先置空确保触发响应式更新
-      this.$nextTick(() => {
-        this.selectedNode = nodeData
-        this.dialogVisible = true
-      })
-    },
-    handleDataSubmit(result) {
-      if (result.success) {
-        this.$message.success('数据导入成功')
-        // 处理导入成功后的逻辑
-      } else {
-        this.$message.error(`导入失败: ${result.error}`)
+    const handleNodeDblClick = (nodeData) => {
+      selectedNode.value = nodeData;
+
+      // 根据传递的 type 打开对应的弹窗
+      switch (nodeData.type) {
+        case 'dataImport':
+          isDataImportOpen.value = true;
+          break;
+        case 'dataVisualization':
+          isDataVisualizationOpen.value = true;
+          break;
+        case 'variableSelect':
+          isVariableSelectionOpen.value = true;
+          break;
+        case 'standardization':
+          isStandardizationOpen.value = true;
+          break;
+        case 'exceptionHandling':
+          isExceptionHandlingOpen.value = true;
+          break;
+        case 'featureSelection':
+          isFeatureSelectionOpen.value = true;
+          break;
+        case 'featureExtraction':
+          isFeatureExtractionOpen.value = true;
+          break;
+        case 'RNN':
+          isRNNOpen.value = true;
+          break;
+        case 'TCN':
+          isTCNOpen.value = true;
+          break;
+        case 'LSTM':
+          isLSTMOpen.value = true;
+          break;
+        case 'Transformer':
+          isTransformerOpen.value = true;
+          break;
+        case 'QualityPrediction':
+          isQualityPredictionFormOpen.value = true;
+          break;
+        default:
+          console.warn('未知类型:', nodeData.type);
       }
-      this.dialogVisible = false
-    }
+    };
+
+    return {
+      graphCanvas,
+      isDataImportOpen,
+      isDataVisualizationOpen,
+      isVariableSelectionOpen,
+      isStandardizationOpen,
+      isExceptionHandlingOpen,
+      isFeatureSelectionOpen,
+      isFeatureExtractionOpen,
+      isRNNOpen,
+      isTCNOpen,
+      isLSTMOpen,
+      isTransformerOpen,
+      isQualityPredictionFormOpen,
+      selectedNode,
+      handleDragStart,
+      handleDrop,
+      handleNodeDblClick
+    };
   }
 }
 </script>

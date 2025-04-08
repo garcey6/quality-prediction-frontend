@@ -61,7 +61,9 @@ export default {
     // 添加双击事件监听
     this.graph.on('node:dblclick', ({ node }) => {
       console.log('节点被双击:', node) // 添加调试日志
-      this.$emit('node-dblclick', node.getData())
+      console.log('传递的参数:', node.getData());
+      const data = node.getData()
+      this.$emit('node-dblclick', data)
     })
   },
   methods: {
