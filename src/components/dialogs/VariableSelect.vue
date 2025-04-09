@@ -22,6 +22,8 @@
 </template>
 
 <script>
+import { getVariables, updateSelectedVariables } from '../../api/variables';
+
 export default {
   props: ['initialData'],
   data() {
@@ -31,18 +33,31 @@ export default {
     }
   },
   async mounted() {
-    const response = await this.$http.get('/api/variables')
-    this.variables = response.data.map(v => ({
-      key: v.id,
-      label: v.name,
-      disabled: v.status === 0
-    }))
+    try {
+      const data = await getVariables();
+      this.variables = data.map(v => ({
+        key: v.id,
+        label: `${v.name} (${v.type})`, // 显示变量类型
+        disabled: v.status === 0
+      }));
+    } catch (error) {
+      this.$message.error('获取变量列表失败');
+    }
   },
   methods: {
-    handleSubmit() {
-      this.$emit('submit', {
-        selectedVariables: this.selectedVariables
-      })
+    async handleSubmit() {
+      try {
+        await updateSelectedVariables(this.selectedVariables);
+        this.$emit('submit', {
+          success: true,
+          selectedVariables: this.selectedVariables
+        });
+      } catch (error) {
+        this.$emit('submit', {
+          success: false,
+          error: error.message
+        });
+      }
     }
   }
 }
