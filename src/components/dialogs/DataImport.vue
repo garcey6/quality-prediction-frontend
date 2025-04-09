@@ -41,7 +41,8 @@ export default {
   data() {
     return {
       selectedFile: null,
-      uploading: false
+      uploading: false,
+      uploadProgress: 0 // 新增上传进度状态
     }
   },
   methods: {
@@ -51,12 +52,21 @@ export default {
     async handleUpload() {
       try {
         this.uploading = true
-        const response = await uploadData(this.selectedFile)
+        this.uploadProgress = 0 // 重置进度
+        
+        const response = await uploadData(this.selectedFile, (progressEvent) => {
+          this.uploadProgress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          )
+        })
+        
+        this.$message.success('文件上传成功')
         this.$emit('submit', {
           success: true,
           data: response.data
         })
       } catch (error) {
+        this.$message.error(error.message)
         this.$emit('submit', {
           success: false,
           error: error.message
@@ -138,5 +148,11 @@ export default {
 
 .file-info {
   text-align: center;
+}
+
+/* 新增进度条样式 */
+.progress-container {
+  margin-top: 10px;
+  width: 100%;
 }
 </style>
