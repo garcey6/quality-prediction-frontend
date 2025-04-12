@@ -11,11 +11,13 @@
 
       <div class="form-content">
         <el-form label-position="top">
-          <el-form-item label="选择处理算法">
-            <el-radio-group v-model="selectedAlgorithm">
-              <el-radio label="zscore">Z-Score标准化</el-radio>
-              <el-radio label="minmax">Min-Max归一化</el-radio>
-            </el-radio-group>
+          <el-form-item label="处理方法">
+            <el-select v-model="selectedAlgorithm">
+              <el-option 
+                label="Z-Score标准化" 
+                value="zscore">
+              </el-option>
+            </el-select>
           </el-form-item>
         </el-form>
       </div>
@@ -42,8 +44,8 @@ export default {
       try {
         const workingData = this.$store.state.workingData;
         
-        // 本地异常处理
-        const processedData = this.processDataLocally(workingData);
+        // 直接应用Z-Score标准化
+        const processedData = this.applyZScore(workingData);
         
         // 更新工作数据集
         this.$store.commit('setWorkingData', processedData);
@@ -64,28 +66,17 @@ export default {
       }
     },
     
-    processDataLocally(data) {
-      if (!data) return [];
-      
-      // 根据选择的算法处理数据
-      if (this.selectedAlgorithm === 'zscore') {
-        return this.applyZScore(data);
-      } else if (this.selectedAlgorithm === 'minmax') {
-        return this.applyMinMax(data);
-      }
-      return data;
-    },
-    
     applyZScore(data) {
-      // Z-Score标准化实现
+      if (!data || !data.length) return [];
+      
+      // 计算各数值列的统计量
+      const stats = this.calculateStats(data);
+      
       return data.map(item => {
         const processed = {};
         for (const key in item) {
-          if (typeof item[key] === 'number') {
-            // 这里需要根据实际数据计算均值和标准差
-            const mean = 0; // 实际计算均值
-            const std = 1;  // 实际计算标准差
-            processed[key] = (item[key] - mean) / std;
+          if (typeof item[key] === 'number' && stats[key]) {
+            processed[key] = (item[key] - stats[key].mean) / stats[key].std;
           } else {
             processed[key] = item[key];
           }
@@ -94,22 +85,40 @@ export default {
       });
     },
     
-    applyMinMax(data) {
-      // Min-Max归一化实现
-      return data.map(item => {
-        const processed = {};
-        for (const key in item) {
-          if (typeof item[key] === 'number') {
-            // 这里需要根据实际数据计算最小最大值
-            const min = 0; // 实际计算最小值
-            const max = 1; // 实际计算最大值
-            processed[key] = (item[key] - min) / (max - min);
-          } else {
-            processed[key] = item[key];
-          }
+    calculateStats(data) {
+      const stats = {};
+      const keys = Object.keys(data[0]);
+      
+      // 初始化统计对象
+      keys.forEach(key => {
+        if (typeof data[0][key] === 'number') {
+          stats[key] = {
+            sum: 0,
+            sumSq: 0,
+            count: 0
+          };
         }
-        return processed;
       });
+      
+      // 计算总和和平方和
+      data.forEach(item => {
+        for (const key in stats) {
+          const val = item[key];
+          stats[key].sum += val;
+          stats[key].sumSq += val * val;
+          stats[key].count++;
+        }
+      });
+      
+      // 计算均值和标准差
+      for (const key in stats) {
+        const s = stats[key];
+        s.mean = s.sum / s.count;
+        s.variance = (s.sumSq - (s.sum * s.sum) / s.count) / s.count;
+        s.std = Math.sqrt(s.variance);
+      }
+      
+      return stats;
     }
   }
 }

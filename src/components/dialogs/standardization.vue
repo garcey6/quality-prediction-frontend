@@ -9,11 +9,13 @@
 
       <div class="form-content">
         <el-form label-position="top">
-          <el-form-item label="选择标准化方法">
-            <el-radio-group v-model="selectedMethod">
-              <el-radio label="zscore">Z-Score标准化</el-radio>
-              <el-radio label="minmax">Min-Max归一化</el-radio>
-            </el-radio-group>
+          <el-form-item label="标准化方法">
+            <el-select v-model="selectedMethod">
+              <el-option 
+                label="Min-Max归一化" 
+                value="minmax">
+              </el-option>
+            </el-select>
           </el-form-item>
         </el-form>
       </div>
@@ -35,26 +37,25 @@
 export default {
   data() {
     return {
-      selectedMethod: 'zscore',
-      loading: false
+      loading: false,
+      selectedMethod: 'minmax' // 默认选中Min-Max归一化
     }
   },
   methods: {
     async handleSubmit() {
       this.loading = true;
       try {
+        // 直接操作工作副本
         const workingData = this.$store.state.workingData;
-        const processedData = this.processData(workingData);
+        this.applyMinMax(workingData);
         
-        this.$store.commit('setWorkingData', processedData);
-        
-        this.$message.success('数据标准化已应用');
+        this.$message.success('数据归一化已应用');
         this.$emit('submit', {
           success: true,
-          data: processedData
+          data: workingData
         });
       } catch (error) {
-        this.$message.error(error.message || '数据标准化失败');
+        this.$message.error(error.message || '数据归一化失败');
         this.$emit('submit', {
           success: false,
           error: error.message
@@ -64,46 +65,17 @@ export default {
       }
     },
     
-    processData(data) {
-      if (!data || !data.length) return [];
-      
-      if (this.selectedMethod === 'zscore') {
-        return this.applyZScore(data);
-      } else {
-        return this.applyMinMax(data);
-      }
-    },
-    
-    applyZScore(data) {
-      const stats = this.calculateStats(data);
-      
-      return data.map(item => {
-        const processed = {};
-        for (const key in item) {
-          if (typeof item[key] === 'number') {
-            processed[key] = (item[key] - stats[key].mean) / stats[key].std;
-          } else {
-            processed[key] = item[key];
-          }
-        }
-        return processed;
-      });
-    },
-    
     applyMinMax(data) {
       const stats = this.calculateStats(data);
       
-      return data.map(item => {
-        const processed = {};
-        for (const key in item) {
+      // 直接修改原数据
+      data.forEach(item => {
+        for (const key in stats) {
           if (typeof item[key] === 'number') {
-            processed[key] = (item[key] - stats[key].min) / 
-                           (stats[key].max - stats[key].min);
-          } else {
-            processed[key] = item[key];
+            item[key] = (item[key] - stats[key].min) / 
+                       (stats[key].max - stats[key].min);
           }
         }
-        return processed;
       });
     },
     
@@ -115,34 +87,20 @@ export default {
       keys.forEach(key => {
         if (typeof data[0][key] === 'number') {
           stats[key] = {
-            sum: 0,
-            sumSq: 0,
             min: Infinity,
-            max: -Infinity,
-            count: 0
+            max: -Infinity
           };
         }
       });
       
-      // 计算总和、平方和、最小最大值
+      // 计算最小最大值
       data.forEach(item => {
         for (const key in stats) {
           const val = item[key];
-          stats[key].sum += val;
-          stats[key].sumSq += val * val;
           stats[key].min = Math.min(stats[key].min, val);
           stats[key].max = Math.max(stats[key].max, val);
-          stats[key].count++;
         }
       });
-      
-      // 计算最终统计量
-      for (const key in stats) {
-        const s = stats[key];
-        s.mean = s.sum / s.count;
-        s.variance = (s.sumSq - (s.sum * s.sum) / s.count) / s.count;
-        s.std = Math.sqrt(s.variance);
-      }
       
       return stats;
     }

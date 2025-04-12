@@ -26,6 +26,8 @@
 </template>
 
 <script>
+import { getMultivariateVisualization } from '../../api/visualization'
+
 export default {
   data() {
     return {
@@ -39,16 +41,17 @@ export default {
       this.loading = true;
       this.errorMessage = null;
       try {
-        const response = await this.$http.post('/api/visualization/multivariate', {
-          data: this.$store.state.workingData
-        });
+        const response = await getMultivariateVisualization(
+          this.$store.state.originalData
+        );
         
-        if (response.data.error) {
-          throw new Error(response.data.error);
+        // 直接使用返回的响应数据
+        if (!response || !response.image) {
+          throw new Error('未获取到有效的可视化图片');
         }
         
-        this.chartImage = `data:image/png;base64,${response.data.image}`;
-        this.$message.success(response.data.message);
+        this.chartImage = `data:image/png;base64,${response.image}`;
+        this.$message.success(response.message || '可视化生成成功');
         
       } catch (error) {
         this.errorMessage = '数据可视化失败: ' + error.message;
