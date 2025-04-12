@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// 创建axios实例
 const api = axios.create({
   baseURL: 'http://127.0.0.1:5000'
 });
@@ -12,7 +11,16 @@ const api = axios.create({
 export const getVariables = () => {
   return api.get('/api/variables')
     .then(response => {
-      return response.data;
+      // 确保返回数据格式正确
+      if (!Array.isArray(response.data)) {
+        throw new Error('无效的变量数据格式');
+      }
+      return response.data.map(v => ({
+        id: v.id,
+        name: v.name,
+        type: v.type || 'unknown', // 添加默认类型
+        status: v.status || 1 // 默认启用
+      }));
     })
     .catch(error => {
       console.error('获取变量列表失败:', error);
@@ -25,15 +33,15 @@ export const getVariables = () => {
  * @param {Array} selectedVars 选中的变量ID数组
  * @returns {Promise} 
  */
-export const updateSelectedVariables = (selectedVars) => {
-  return api.post('/api/variables/selected', {
-    selected: selectedVars
+export const updateSelectedVariables = (data) => {
+  return api.post('/api/variables/selected', data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
   })
-  .then(response => {
-    return response.data;
-  })
+  .then(response => response.data)
   .catch(error => {
-    console.error('更新选中变量失败:', error);
+    console.error('保存变量失败:', error.response?.data);
     throw error;
   });
 };

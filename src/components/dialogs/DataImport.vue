@@ -51,28 +51,30 @@ export default {
     },
     async handleUpload() {
       try {
-        this.uploading = true
-        this.uploadProgress = 0 // 重置进度
+        this.uploading = true;
+        const { originalData, workingData } = await uploadData(this.selectedFile);
         
-        const response = await uploadData(this.selectedFile, (progressEvent) => {
-          this.uploadProgress = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          )
-        })
+        // 验证数据
+        if (!originalData || !workingData) {
+          throw new Error('服务器返回数据不完整');
+        }
+
+        this.$store.commit('setOriginalData', originalData);
+        this.$store.commit('setWorkingData', workingData);
         
-        this.$message.success('文件上传成功')
+        this.$message.success('文件上传成功');
         this.$emit('submit', {
           success: true,
-          data: response.data
-        })
+          data: { originalData, workingData }
+        });
       } catch (error) {
-        this.$message.error(error.message)
+        this.$message.error(error.message || '文件上传失败');
         this.$emit('submit', {
           success: false,
           error: error.message
-        })
+        });
       } finally {
-        this.uploading = false
+        this.uploading = false;
       }
     },
     handleClose() {

@@ -22,14 +22,15 @@
 </template>
 
 <script>
-import { getVariables, updateSelectedVariables } from '../../api/variables';
+import { getVariables } from '../../api/variables';  
 
 export default {
   props: ['initialData'],
   data() {
     return {
       variables: [],
-      selectedVariables: this.initialData?.selected || []
+      selectedVariables: this.initialData?.selected || [],
+      loading: false
     }
   },
   async mounted() {
@@ -46,18 +47,44 @@ export default {
   },
   methods: {
     async handleSubmit() {
+      this.loading = true;
       try {
-        await updateSelectedVariables(this.selectedVariables);
+        // 直接处理工作数据集
+        const workingData = this.$store.state.workingData;
+        const filteredData = this.filterDataByVariables(workingData, this.selectedVariables);
+        
+        // 更新工作数据集
+        this.$store.commit('setWorkingData', filteredData);
+        
+        this.$message.success('变量选择已应用');
         this.$emit('submit', {
           success: true,
+          data: filteredData,
           selectedVariables: this.selectedVariables
         });
       } catch (error) {
+        this.$message.error(error.message || '变量选择失败');
         this.$emit('submit', {
           success: false,
           error: error.message
         });
+      } finally {
+        this.loading = false;
       }
+    },
+    filterDataByVariables(data, selectedVars) {
+      if (!data) return [];
+      return data.map(item => {
+        const filtered = {};
+        selectedVars.forEach(varId => {
+          const variable = this.variables.find(v => v.key === varId);
+          if (variable) {
+            const varName = variable.label.split(' (')[0]; // 从"变量名 (类型)"中提取变量名
+            filtered[varName] = item[varName];
+          }
+        });
+        return filtered;
+      });
     }
   }
 }

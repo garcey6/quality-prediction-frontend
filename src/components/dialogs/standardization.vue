@@ -1,12 +1,10 @@
 <template>
   <div class="standardization-modal">
     <div class="standardization-form">
-      <!-- 关闭按钮 -->
       <div class="close-btn-container">
         <span class="close-btn" @click="$emit('close')">×</span>
       </div>
 
-      <!-- 标题 -->
       <h3 class="dialog-title">数据标准化</h3>
 
       <div class="form-content">
@@ -17,23 +15,17 @@
               <el-radio label="minmax">Min-Max归一化</el-radio>
             </el-radio-group>
           </el-form-item>
-
-          <el-form-item label="参数设置" v-if="selectedMethod">
-            <div v-if="selectedMethod === 'zscore'">
-              <el-input-number v-model="zscoreParams.mean" label="均值"></el-input-number>
-              <el-input-number v-model="zscoreParams.std" label="标准差" :min="0.1"></el-input-number>
-            </div>
-            <div v-else>
-              <el-input-number v-model="minmaxParams.min" label="最小值"></el-input-number>
-              <el-input-number v-model="minmaxParams.max" label="最大值"></el-input-number>
-            </div>
-          </el-form-item>
         </el-form>
       </div>
 
       <div class="form-footer">
         <el-button @click="$emit('cancel')">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确认</el-button>
+        <el-button 
+          type="primary" 
+          @click="handleSubmit"
+          :loading="loading">
+          确认
+        </el-button>
       </div>
     </div>
   </div>
@@ -44,26 +36,115 @@ export default {
   data() {
     return {
       selectedMethod: 'zscore',
-      zscoreParams: {
-        mean: 0,
-        std: 1
-      },
-      minmaxParams: {
-        min: 0,
-        max: 1
-      }
+      loading: false
     }
   },
   methods: {
-    handleSubmit() {
-      const params = this.selectedMethod === 'zscore' 
-        ? this.zscoreParams 
-        : this.minmaxParams
+    async handleSubmit() {
+      this.loading = true;
+      try {
+        const workingData = this.$store.state.workingData;
+        const processedData = this.processData(workingData);
         
-      this.$emit('submit', {
-        method: this.selectedMethod,
-        params
-      })
+        this.$store.commit('setWorkingData', processedData);
+        
+        this.$message.success('数据标准化已应用');
+        this.$emit('submit', {
+          success: true,
+          data: processedData
+        });
+      } catch (error) {
+        this.$message.error(error.message || '数据标准化失败');
+        this.$emit('submit', {
+          success: false,
+          error: error.message
+        });
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    processData(data) {
+      if (!data || !data.length) return [];
+      
+      if (this.selectedMethod === 'zscore') {
+        return this.applyZScore(data);
+      } else {
+        return this.applyMinMax(data);
+      }
+    },
+    
+    applyZScore(data) {
+      const stats = this.calculateStats(data);
+      
+      return data.map(item => {
+        const processed = {};
+        for (const key in item) {
+          if (typeof item[key] === 'number') {
+            processed[key] = (item[key] - stats[key].mean) / stats[key].std;
+          } else {
+            processed[key] = item[key];
+          }
+        }
+        return processed;
+      });
+    },
+    
+    applyMinMax(data) {
+      const stats = this.calculateStats(data);
+      
+      return data.map(item => {
+        const processed = {};
+        for (const key in item) {
+          if (typeof item[key] === 'number') {
+            processed[key] = (item[key] - stats[key].min) / 
+                           (stats[key].max - stats[key].min);
+          } else {
+            processed[key] = item[key];
+          }
+        }
+        return processed;
+      });
+    },
+    
+    calculateStats(data) {
+      const stats = {};
+      const keys = Object.keys(data[0]);
+      
+      // 初始化统计对象
+      keys.forEach(key => {
+        if (typeof data[0][key] === 'number') {
+          stats[key] = {
+            sum: 0,
+            sumSq: 0,
+            min: Infinity,
+            max: -Infinity,
+            count: 0
+          };
+        }
+      });
+      
+      // 计算总和、平方和、最小最大值
+      data.forEach(item => {
+        for (const key in stats) {
+          const val = item[key];
+          stats[key].sum += val;
+          stats[key].sumSq += val * val;
+          stats[key].min = Math.min(stats[key].min, val);
+          stats[key].max = Math.max(stats[key].max, val);
+          stats[key].count++;
+        }
+      });
+      
+      // 计算最终统计量
+      for (const key in stats) {
+        const s = stats[key];
+        s.mean = s.sum / s.count;
+        s.variance = (s.sumSq - (s.sum * s.sum) / s.count) / s.count;
+        s.std = Math.sqrt(s.variance);
+      }
+      
+      return stats;
     }
   }
 }
@@ -122,9 +203,5 @@ export default {
 .form-footer {
   margin-top: 20px;
   text-align: right;
-}
-
-.el-input-number {
-  margin-right: 10px;
 }
 </style>

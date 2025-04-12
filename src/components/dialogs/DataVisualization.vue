@@ -1,41 +1,25 @@
 <template>
   <div class="visualization-modal">
     <div class="visualization-form">
-      <!-- 关闭按钮 -->
+      <!-- 关闭按钮和标题保持不变 -->
       <div class="close-btn-container">
         <span class="close-btn" @click="$emit('close')">×</span>
       </div>
 
-      <!-- 标题 -->
-      <h3 class="dialog-title">数据可视化设置</h3>
+      <h3 class="dialog-title">间歇过程数据可视化</h3>
 
-      <div class="form-content">
-        <el-form label-position="top">
-          <el-form-item label="选择变量">
-            <el-transfer
-              v-model="selectedVariables"
-              :data="variables"
-              filterable
-              :titles="['可选变量', '已选变量']">
-            </el-transfer>
-          </el-form-item>
-
-          <el-form-item label="选择图表类型">
-            <el-select v-model="chartType" placeholder="请选择图表类型">
-              <el-option
-                v-for="type in chartTypes"
-                :key="type.value"
-                :label="type.label"
-                :value="type.value">
-              </el-option>
-            </el-select>
-          </el-form-item>
-        </el-form>
+      <div class="chart-container" v-if="chartImage">
+        <img :src="chartImage" style="width: 100%; max-height: 500px; object-fit: contain;">
       </div>
 
       <div class="form-footer">
         <el-button @click="$emit('cancel')">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确认</el-button>
+        <el-button 
+          type="primary" 
+          @click="handleSubmit"
+          :loading="loading">
+          生成可视化
+        </el-button>
       </div>
     </div>
   </div>
@@ -45,31 +29,33 @@
 export default {
   data() {
     return {
-      selectedVariables: [],
-      variables: [],
-      chartType: 'line',
-      chartTypes: [
-        { value: 'line', label: '折线图' },
-        { value: 'bar', label: '柱状图' },
-        { value: 'pie', label: '饼图' },
-        { value: 'scatter', label: '散点图' }
-      ]
+      loading: false,
+      chartImage: null,
+      errorMessage: null
     }
   },
-  async mounted() {
-    // 获取变量数据
-    const response = await this.$http.get('/api/variables')
-    this.variables = response.data.map(v => ({
-      key: v.id,
-      label: v.name
-    }))
-  },
   methods: {
-    handleSubmit() {
-      this.$emit('submit', {
-        variables: this.selectedVariables,
-        chartType: this.chartType
-      })
+    async handleSubmit() {
+      this.loading = true;
+      this.errorMessage = null;
+      try {
+        const response = await this.$http.post('/api/visualization/multivariate', {
+          data: this.$store.state.workingData
+        });
+        
+        if (response.data.error) {
+          throw new Error(response.data.error);
+        }
+        
+        this.chartImage = `data:image/png;base64,${response.data.image}`;
+        this.$message.success(response.data.message);
+        
+      } catch (error) {
+        this.errorMessage = '数据可视化失败: ' + error.message;
+        this.$message.error(this.errorMessage);
+      } finally {
+        this.loading = false;
+      }
     }
   }
 }
