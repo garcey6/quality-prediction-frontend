@@ -50,41 +50,42 @@
 </template>
 
 <script>
+import { getExtractedFeatures } from '../../api/featureExtraction';
+
 export default {
+  // 移除selectedFeatures prop
   data() {
     return {
-      selectedMethod: '',
+      selectedMethod: 'pca',
+      loading: false,
       extractionMethods: [
-        { value: 'pca', label: 'PCA主成分分析' },
-        { value: 'lda', label: 'LDA线性判别分析' },
-        { value: 'tsfresh', label: 'TSFresh时序特征' }
+        { value: 'pca', label: 'PCA主成分分析' }
       ],
       pcaParams: {
         n_components: 2
-      },
-      ldaParams: {
-        n_components: 1
-      },
-      tsfreshParams: {
-        features: ['mean', 'variance']
       }
     }
   },
   methods: {
-    handleSubmit() {
-      let params = {}
-      if (this.selectedMethod === 'pca') {
-        params = this.pcaParams
-      } else if (this.selectedMethod === 'lda') {
-        params = this.ldaParams
-      } else if (this.selectedMethod === 'tsfresh') {
-        params = this.tsfreshParams
+    async handleSubmit() {
+      this.loading = true;
+      try {
+        const response = await getExtractedFeatures({
+          method: 'pca',
+          n_components: this.pcaParams.n_components
+        });
+        
+        this.$message.success(response.message);
+        this.$emit('submit', {
+          method: 'pca',
+          n_components: this.pcaParams.n_components
+        });
+        
+      } catch (error) {
+        this.$message.error(error.message || '特征提取失败');
+      } finally {
+        this.loading = false;
       }
-
-      this.$emit('submit', {
-        method: this.selectedMethod,
-        params
-      })
     }
   }
 }
