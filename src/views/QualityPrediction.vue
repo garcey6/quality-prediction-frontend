@@ -36,6 +36,7 @@
       <LSTM v-if="isLSTMOpen" :node="selectedNode" @close="isLSTMOpen = false" />
       <Transformer v-if="isTransformerOpen" :node="selectedNode" @close="isTransformerOpen = false" />
       <QualityPredictionForm v-if="isQualityPredictionFormOpen" :node="selectedNode" @close="isQualityPredictionFormOpen = false" />
+      <PLS v-if="isPLSOpen" :node="selectedNode" @close="isPLSOpen = false" />
     </div>
   </div>
 </template>
@@ -56,6 +57,7 @@ import TCN from '../components/dialogs/TCN.vue'
 import LSTM from '../components/dialogs/LSTM.vue'
 import Transformer from '../components/dialogs/Transformer.vue'
 import QualityPredictionForm from '../components/dialogs/QualityPredictionForm.vue'
+import PLS from '../components/dialogs/PLS.vue'
 
 export default {
   components: {
@@ -68,6 +70,7 @@ export default {
     ExceptionHandling,
     FeatureSelection,
     FeatureExtraction,
+    PLS,
     RNN,
     TCN,
     LSTM,
@@ -83,6 +86,7 @@ export default {
     const isExceptionHandlingOpen = ref(false);
     const isFeatureSelectionOpen = ref(false);
     const isFeatureExtractionOpen = ref(false);
+    const isPLSOpen = ref(false);
     const isRNNOpen = ref(false);
     const isTCNOpen = ref(false);
     const isLSTMOpen = ref(false);
@@ -150,6 +154,9 @@ export default {
         case 'QualityPrediction':
           isQualityPredictionFormOpen.value = true;
           break;
+        case 'PLS':
+          isPLSOpen.value = true;
+          break;
         default:
           console.warn('未知类型:', nodeData.type);
       }
@@ -172,7 +179,8 @@ export default {
       selectedNode,
       handleDragStart,
       handleDrop,
-      handleNodeDblClick
+      handleNodeDblClick,
+      isPLSOpen,
     };
   }
 }

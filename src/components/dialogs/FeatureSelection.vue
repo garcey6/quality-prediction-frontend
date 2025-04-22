@@ -15,9 +15,9 @@
             <el-select v-model="targetVariable" placeholder="请选择目标变量">
               <el-option
                 v-for="item in variables"
-                :key="item.key"
-                :label="item.label"
-                :value="item.key">
+                :key="item"
+                :label="item"
+                :value="item">
               </el-option>
             </el-select>
           </el-form-item>
@@ -49,51 +49,48 @@
 </template>
 
 <script>
-import { getFilteredFeatures } from '../../api/featureSelection';
+import { getVariables, selectFeatures } from '../../api/featureSelection';
 
 export default {
   data() {
     return {
       targetVariable: '',
-      variables: [],
-      correlationThreshold: 0.5, // 确保这里已经定义
-      filterMethods: [
-        { value: 'pearson', label: '皮尔逊相关系数' },
-        { value: 'mutual_info', label: '互信息' }
-      ],
-      selectedMethod: 'pearson',
+      variables: [], // 只存储变量名数组
+      correlationThreshold: 0.5,
       loading: false
     }
   },
   async mounted() {
-    // 从工作副本获取变量
-    const workingData = this.$store.state.workingData
-    if (workingData && workingData.length > 0) {
-      this.variables = Object.keys(workingData[0])
-        .filter(key => typeof workingData[0][key] === 'number')
-        .map(key => ({
-          key: key,  // 完全保留原始变量名
-          label: key // 显示时也完全保留原始变量名
-        }))
+    try {
+      this.variables = await getVariables(); // 直接使用API返回的变量名数组
+      
+      if (this.variables.length === 0) {
+        this.$message.warning('未获取到可用变量');
+      }
+    } catch (error) {
+      this.$message.error(error.message);
+      console.error('获取变量错误:', error);
     }
   },
   methods: {
     async handleSubmit() {
+      if (!this.targetVariable) {
+        this.$message.error('请选择目标变量');
+        return;
+      }
+      
       this.loading = true;
       try {
-        const response = await getFilteredFeatures(
+        const response = await selectFeatures(
           this.targetVariable,
-          this.correlationThreshold,
-          this.selectedMethod
+          this.correlationThreshold
         );
         
-        // 显示成功消息
         this.$message.success(response.message);
-        
         this.$emit('submit', {
           targetVariable: this.targetVariable,
           correlationThreshold: this.correlationThreshold,
-          method: this.selectedMethod
+          selectedFeatures: response.selected_features
         });
         
       } catch (error) {

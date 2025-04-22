@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import { getVariables } from '../../api/variables';  
+import { getVariables, selectVariables } from '../../api/variables';
 
 export default {
   props: ['initialData'],
@@ -38,32 +38,40 @@ export default {
       const data = await getVariables();
       this.variables = data.map(v => ({
         key: v.id,
-        label: `${v.name} (${v.type})`, // 显示变量类型
+        label: v.name,  // 只显示变量名
         disabled: v.status === 0
       }));
     } catch (error) {
-      this.$message.error('获取变量列表失败');
+      this.$message.error(error.message);
     }
   },
   methods: {
     async handleSubmit() {
       this.loading = true;
       try {
-        // 直接处理工作数据集
-        const workingData = this.$store.state.workingData;
-        const filteredData = this.filterDataByVariables(workingData, this.selectedVariables);
+        // 获取变量名而不是ID
+        const varNames = this.selectedVariables
+          .filter(v => v !== null && v !== undefined)
+          .map(v => {
+            const variable = this.variables.find(item => item.key === v);
+            return variable ? variable.label : null; // 使用label(变量名)而不是key(ID)
+          })
+          .filter(v => v !== null);
         
-        // 更新工作数据集
-        this.$store.commit('setWorkingData', filteredData);
+        if (varNames.length === 0) {
+          throw new Error('请至少选择一个变量');
+        }
+        
+        const response = await selectVariables(varNames);
         
         this.$message.success('变量选择已应用');
         this.$emit('submit', {
           success: true,
-          data: filteredData,
-          selectedVariables: this.selectedVariables
+          selectedVariables: this.selectedVariables,
+          message: response.message
         });
       } catch (error) {
-        this.$message.error(error.message || '变量选择失败');
+        this.$message.error(error.message);
         this.$emit('submit', {
           success: false,
           error: error.message
@@ -71,20 +79,6 @@ export default {
       } finally {
         this.loading = false;
       }
-    },
-    filterDataByVariables(data, selectedVars) {
-      if (!data) return [];
-      return data.map(item => {
-        const filtered = {};
-        selectedVars.forEach(varId => {
-          const variable = this.variables.find(v => v.key === varId);
-          if (variable) {
-            const varName = variable.label.split(' (')[0]; // 从"变量名 (类型)"中提取变量名
-            filtered[varName] = item[varName];
-          }
-        });
-        return filtered;
-      });
     }
   }
 }

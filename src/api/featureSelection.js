@@ -4,24 +4,28 @@ const api = axios.create({
   baseURL: 'http://127.0.0.1:5000'
 });
 
-export const getFilteredFeatures = (target, threshold, method) => {
-  return api.post('/api/feature_selection/filter', {
-    target,
-    threshold,
-    method
+export const getVariables = () => {
+  return api.get('/api/feature-selection/variables')
+    .then(response => {
+      if (!response.data || !Array.isArray(response.data)) {
+        throw new Error('获取变量数据格式不正确');
+      }
+      return response.data; // 直接返回数组
+    })
+    .catch(error => {
+      console.error('获取变量失败:', error);
+      throw new Error(error.response?.data?.message || '获取变量失败');
+    });
+};
+
+export const selectFeatures = (targetVariable, threshold) => {
+  return api.post('/api/feature-selection/select', {
+    target_variable: targetVariable,
+    threshold: threshold
   })
-  .then(response => {
-    const responseData = response?.data;
-    if (!responseData || responseData.status !== 'success') {
-      throw new Error(responseData?.message || '无效的特征选择数据');
-    }
-    return {
-      message: responseData.message,
-      status: responseData.status
-    };
-  })
+  .then(response => response.data)
   .catch(error => {
-    console.error('特征选择请求失败:', error);
-    throw new Error(error.response?.data?.message || error.message || '特征选择请求失败');
+    console.error('特征选择失败:', error);
+    throw new Error(error.response?.data?.message || '特征选择失败');
   });
 };

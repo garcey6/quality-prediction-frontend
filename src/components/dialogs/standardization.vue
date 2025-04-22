@@ -34,28 +34,28 @@
 </template>
 
 <script>
+import { standardizeData } from '../../api/standardization';
+
 export default {
   data() {
     return {
       loading: false,
-      selectedMethod: 'minmax' // 默认选中Min-Max归一化
+      selectedMethod: 'minmax'
     }
   },
   methods: {
     async handleSubmit() {
       this.loading = true;
       try {
-        // 直接操作工作副本
-        const workingData = this.$store.state.workingData;
-        this.applyMinMax(workingData);
+        const response = await standardizeData(this.selectedMethod);
         
-        this.$message.success('数据归一化已应用');
+        this.$message.success('数据标准化已应用');
         this.$emit('submit', {
           success: true,
-          data: workingData
+          message: response.message
         });
       } catch (error) {
-        this.$message.error(error.message || '数据归一化失败');
+        this.$message.error(error.message);
         this.$emit('submit', {
           success: false,
           error: error.message
@@ -63,46 +63,6 @@ export default {
       } finally {
         this.loading = false;
       }
-    },
-    
-    applyMinMax(data) {
-      const stats = this.calculateStats(data);
-      
-      // 直接修改原数据
-      data.forEach(item => {
-        for (const key in stats) {
-          if (typeof item[key] === 'number') {
-            item[key] = (item[key] - stats[key].min) / 
-                       (stats[key].max - stats[key].min);
-          }
-        }
-      });
-    },
-    
-    calculateStats(data) {
-      const stats = {};
-      const keys = Object.keys(data[0]);
-      
-      // 初始化统计对象
-      keys.forEach(key => {
-        if (typeof data[0][key] === 'number') {
-          stats[key] = {
-            min: Infinity,
-            max: -Infinity
-          };
-        }
-      });
-      
-      // 计算最小最大值
-      data.forEach(item => {
-        for (const key in stats) {
-          const val = item[key];
-          stats[key].min = Math.min(stats[key].min, val);
-          stats[key].max = Math.max(stats[key].max, val);
-        }
-      });
-      
-      return stats;
     }
   }
 }

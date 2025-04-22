@@ -25,6 +25,7 @@ export default {
         { name: '数据可视化', icon: '/img/6.png', type: 'dataVisualization' },
         { name: '特征选择', icon: '/img/7.png', type: 'featureSelection' },
         { name: '特征提取', icon: '/img/8.png', type: 'featureExtraction' },
+        { name: 'PLS', icon: '/img/14.png', type: 'PLS' }, // 新增PLS模块
         { name: 'RNN', icon: '/img/9.png', type: 'RNN' },
         { name: 'TCN', icon: '/img/10.png', type: 'TCN' },
         { name: 'LSTM', icon: '/img/11.png', type: 'LSTM' },

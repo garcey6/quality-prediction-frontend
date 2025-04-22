@@ -26,7 +26,7 @@
 </template>
 
 <script>
-import { getMultivariateVisualization } from '../../api/visualization'
+import { getVisualization } from '../../api/visualization';
 
 export default {
   data() {
@@ -41,11 +41,8 @@ export default {
       this.loading = true;
       this.errorMessage = null;
       try {
-        const response = await getMultivariateVisualization(
-          this.$store.state.originalData
-        );
+        const response = await getVisualization();
         
-        // 直接使用返回的响应数据
         if (!response || !response.image) {
           throw new Error('未获取到有效的可视化图片');
         }
