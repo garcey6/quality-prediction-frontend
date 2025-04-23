@@ -7,7 +7,7 @@
             </div>
 
             <!-- 标题 -->
-            <h3 class="dialog-title">PLS预测设置</h3>
+            <h3 class="dialog-title">PLS预测</h3>
 
             <div class="form-content">
                 <el-form label-position="top">
@@ -16,9 +16,9 @@
                         </el-input-number>
                     </el-form-item>
 
-                    <el-form-item label="当前设置">
+                    <!-- <el-form-item label="当前设置">
                         <div>主成分数量: {{ n_components }}</div>
-                    </el-form-item>
+                    </el-form-item> -->
                 </el-form>
             </div>
 

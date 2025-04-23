@@ -11,30 +11,30 @@
 
       <div class="result-content">
         <!-- 预测结果图表 -->
-        <div class="chart-container">
-          <div id="prediction-chart" style="width: 100%; height: 300px;"></div>
-        </div>
-
-        <!-- 预测指标 -->
-        <div class="metrics-container">
-          <el-table :data="metricsData" border style="width: 100%">
-            <el-table-column prop="name" label="评估指标" width="180"></el-table-column>
-            <el-table-column prop="value" label="数值"></el-table-column>
-          </el-table>
+        <div class="chart-container" v-if="chartImage">
+          <img :src="chartImage" style="width: 100%; max-height: 500px; object-fit: contain;">
         </div>
 
         <!-- 预测详情 -->
         <div class="detail-container">
           <el-collapse v-model="activeNames">
             <el-collapse-item title="预测详情" name="1">
-              <pre>{{ predictionDetails }}</pre>
+              <!-- 预测指标 (移动到预测详情下方) -->
+              <div class="metrics-container">
+                <el-table :data="metricsData" border style="width: 100%">
+                  <el-table-column prop="name" label="评估指标" width="180"></el-table-column>
+                  <el-table-column prop="value" label="数值"></el-table-column>
+                </el-table>
+              </div>
             </el-collapse-item>
           </el-collapse>
         </div>
+
+
       </div>
 
       <div class="form-footer">
-        <el-button type="primary" @click="handleExport">导出结果</el-button>
+        <el-button type="primary" @click="handleExport">导出图片</el-button>
         <el-button @click="$emit('cancel')">关闭</el-button>
       </div>
     </div>
@@ -42,68 +42,71 @@
 </template>
 
 <script>
-import * as echarts from 'echarts'
+import { getPredictionVisualization, exportPrediction } from '../../api/qualityPrediction'
 
 export default {
   props: {
-    predictionData: {
-      type: Object,
-      required: true
+    modelType: {
+      type: String,
+      default: 'pls'
     }
   },
   data() {
     return {
       activeNames: ['1'],
-      metricsData: [
-        { name: 'RMSE', value: '0.12' },
-        { name: 'MAE', value: '0.09' },
-        { name: 'R²', value: '0.96' }
-      ],
+      metricsData: [],
       predictionDetails: '',
-      chart: null
+      chartImage: null,  // 改为存储图片URL
+      loading: false
     }
   },
   mounted() {
-    this.initChart()
-    this.formatDetails()
+    this.loadPredictionData()
   },
   methods: {
-    initChart() {
-      this.chart = echarts.init(document.getElementById('prediction-chart'))
-      const option = {
-        tooltip: {
-          trigger: 'axis'
-        },
-        legend: {
-          data: ['实际值', '预测值']
-        },
-        xAxis: {
-          type: 'category',
-          data: ['1', '2', '3', '4', '5', '6', '7', '8']
-        },
-        yAxis: {
-          type: 'value'
-        },
-        series: [
-          {
-            name: '实际值',
-            type: 'line',
-            data: [5.1, 5.3, 5.5, 5.2, 5.4, 5.6, 5.3, 5.5]
-          },
-          {
-            name: '预测值',
-            type: 'line',
-            data: [5.0, 5.2, 5.4, 5.3, 5.5, 5.5, 5.4, 5.6]
-          }
+    async loadPredictionData() {
+      this.loading = true
+      try {
+        const response = await getPredictionVisualization(this.modelType)
+
+        // 处理返回的数据
+        this.metricsData = [
+          { name: 'RMSE', value: response.metrics.rmse.toFixed(4) },
+          { name: 'MAE', value: response.metrics.mae.toFixed(4) },
+          { name: 'R²', value: response.metrics.r2.toFixed(4) },
+          { name: 'MSE', value: response.metrics.mse.toFixed(4) },
+          { name: '样本数', value: response.metrics.样本数 }
         ]
+
+        this.predictionDetails = JSON.stringify(response, null, 2)
+
+        // 确保图片数据格式正确
+        this.chartImage = response.image.startsWith('data:image')
+          ? response.image
+          : `data:image/png;base64,${response.image}`
+
+      } catch (error) {
+        this.$message.error('加载预测结果失败: ' + error.message)
+      } finally {
+        this.loading = false
       }
-      this.chart.setOption(option)
     },
-    formatDetails() {
-      this.predictionDetails = JSON.stringify(this.predictionData, null, 2)
-    },
-    handleExport() {
-      this.$emit('export')
+
+    // 移除initChart方法及相关方法
+    async handleExport() {
+      try {
+        const response = await exportPrediction(this.modelType)
+        
+        // 创建下载链接
+        const link = document.createElement('a')
+        link.href = response.file_path
+        link.download = response.file_name
+        link.click()
+        
+        this.$message.success('图片导出成功')
+      } catch (error) {
+        this.$message.error('导出图片失败: ' + error.message)
+      }
     }
   }
 }
