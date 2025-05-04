@@ -13,31 +13,17 @@
         <el-form label-position="top">
           <el-form-item label="选择提取方法">
             <el-select v-model="selectedMethod" placeholder="请选择特征提取方法">
-              <el-option
-                v-for="method in extractionMethods"
-                :key="method.value"
-                :label="method.label"
+              <el-option v-for="method in extractionMethods" :key="method.value" :label="method.label"
                 :value="method.value">
               </el-option>
             </el-select>
           </el-form-item>
 
-          <el-form-item label="参数设置" v-if="selectedMethod">
-            <div v-if="selectedMethod === 'pca'">
-              <el-input-number v-model="pcaParams.n_components" :min="1" label="主成分数量"></el-input-number>
-            </div>
-            <div v-else-if="selectedMethod === 'lda'">
-              <el-input-number v-model="ldaParams.n_components" :min="1" label="降维维度"></el-input-number>
-            </div>
-            <div v-else-if="selectedMethod === 'tsfresh'">
-              <el-checkbox-group v-model="tsfreshParams.features">
-                <el-checkbox label="mean">均值</el-checkbox>
-                <el-checkbox label="variance">方差</el-checkbox>
-                <el-checkbox label="skewness">偏度</el-checkbox>
-                <el-checkbox label="kurtosis">峰度</el-checkbox>
-              </el-checkbox-group>
-            </div>
-          </el-form-item>
+          <div v-if="selectedMethod === 'pca'">
+            <el-slider v-model="pcaParams.variance_threshold" :min="0.85" :max="1" :step="0.01" label="方差保留阈值">
+            </el-slider>
+            <span>当前阈值: {{ (pcaParams.variance_threshold * 100).toFixed(0) }}%</span>
+          </div>
         </el-form>
       </div>
 
@@ -53,7 +39,6 @@
 import { getExtractedFeatures } from '../../api/featureExtraction';
 
 export default {
-  // 移除selectedFeatures prop
   data() {
     return {
       selectedMethod: 'pca',
@@ -62,7 +47,7 @@ export default {
         { value: 'pca', label: 'PCA主成分分析' }
       ],
       pcaParams: {
-        n_components: 2
+        variance_threshold: 0.98
       }
     }
   },
@@ -70,19 +55,19 @@ export default {
     async handleSubmit() {
       this.loading = true;
       try {
-        const response = await getExtractedFeatures({
-          method: 'pca',
-          n_components: this.pcaParams.n_components
+        await getExtractedFeatures({
+          method: this.selectedMethod,
+          variance_threshold: this.pcaParams.variance_threshold
         });
         
-        this.$message.success(response.message);
+        this.$message.success('特征提取参数已设置');
         this.$emit('submit', {
-          method: 'pca',
-          n_components: this.pcaParams.n_components
+          method: this.selectedMethod,
+          variance_threshold: this.pcaParams.variance_threshold
         });
         
       } catch (error) {
-        this.$message.error(error.message || '特征提取失败');
+        this.$message.error(error.message || '参数设置失败');
       } finally {
         this.loading = false;
       }

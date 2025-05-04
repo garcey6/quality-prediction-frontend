@@ -13,6 +13,19 @@
         :titles="['可选变量', '已选变量']">
       </el-transfer>
       
+      <!-- 添加目标变量选择区域 -->
+      <div v-if="selectedVariables.length > 0" class="target-select">
+        <h4>选择目标变量</h4>
+        <el-select v-model="targetVariable" placeholder="请选择目标变量">
+          <el-option
+            v-for="varId in selectedVariables"
+            :key="varId"
+            :label="getVariableName(varId)"
+            :value="varId">
+          </el-option>
+        </el-select>
+      </div>
+      
       <div class="form-footer">
         <el-button @click="$emit('cancel')">取消</el-button>
         <el-button type="primary" @click="handleSubmit">确认</el-button>
@@ -30,7 +43,8 @@ export default {
     return {
       variables: [],
       selectedVariables: this.initialData?.selected || [],
-      loading: false
+      loading: false,
+      targetVariable: null  // 新增目标变量
     }
   },
   async mounted() {
@@ -46,9 +60,17 @@ export default {
     }
   },
   methods: {
+    getVariableName(varId) {
+      const variable = this.variables.find(v => v.key === varId);
+      return variable ? variable.label : '';
+    },
     async handleSubmit() {
       this.loading = true;
       try {
+        if (!this.targetVariable && this.selectedVariables.length > 0) {
+          throw new Error('请选择目标变量');
+        }
+        
         // 获取变量名而不是ID
         const varNames = this.selectedVariables
           .filter(v => v !== null && v !== undefined)
@@ -62,12 +84,18 @@ export default {
           throw new Error('请至少选择一个变量');
         }
         
-        const response = await selectVariables(varNames);
+        // 获取目标变量名
+        const targetVarName = this.targetVariable ? 
+          this.getVariableName(this.targetVariable) : null;
+        
+        const response = await selectVariables(varNames, targetVarName);  // 添加目标变量参数
         
         this.$message.success('变量选择已应用');
         this.$emit('submit', {
           success: true,
           selectedVariables: this.selectedVariables,
+          targetVariable: this.targetVariable,
+          targetVariableName: targetVarName,  // 添加目标变量名
           message: response.message
         });
       } catch (error) {
@@ -130,5 +158,19 @@ export default {
 .form-footer {
   margin-top: 20px;
   text-align: right;
+}
+
+/* 新增目标变量选择样式 */
+.target-select {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.target-select h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
 }
 </style>

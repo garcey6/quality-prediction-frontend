@@ -7,7 +7,7 @@
       </div>
 
       <!-- 标题 -->
-      <h3 class="dialog-title">RNN训练设置</h3>
+      <h3 class="dialog-title">RNN预测</h3>
 
       <div class="form-content">
         <el-form label-position="top">
@@ -16,38 +16,41 @@
               <el-radio label="SimpleRNN">简单RNN</el-radio>
             </el-radio-group>
           </el-form-item>
-
-          <el-form-item label="网络结构参数">
-            <el-input-number v-model="networkParams.hidden_units" :min="1" label="隐藏单元数"></el-input-number>
-            <el-input-number v-model="networkParams.num_layers" :min="1" :max="5" label="网络层数"></el-input-number>
-          </el-form-item>
-
-          <el-form-item label="训练参数">
-            <el-input-number v-model="trainParams.epochs" :min="1" :max="1000" label="训练轮数"></el-input-number>
-            <el-input-number v-model="trainParams.batch_size" :min="1" :max="1024" label="批大小"></el-input-number>
-            <el-input-number v-model="trainParams.learning_rate" :min="0.0001" :max="1" :step="0.0001" label="学习率"></el-input-number>
-          </el-form-item>
-
-          <el-form-item label="其他参数">
-            <el-checkbox v-model="networkParams.bidirectional">双向RNN</el-checkbox>
-            <el-checkbox v-model="trainParams.early_stopping">早停机制</el-checkbox>
-          </el-form-item>
         </el-form>
       </div>
 
       <div class="form-footer">
         <el-button @click="$emit('cancel')">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">开始训练</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="loading">
+          开始预测
+        </el-button>
+      </div>
+
+      <!-- 结果显示区域 -->
+      <div v-if="result" class="result-section">
+        <h4>预测结果</h4>
+        <div>均方误差(MSE): {{ result.mse.toFixed(4) }}</div>
+        <div>R²得分: {{ result.r2_score.toFixed(4) }}</div>
+        <div>训练轮数: {{ result.epochs }}</div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { predictRNN } from '../../api/rnn';
+import { mapMutations } from 'vuex';
+
 export default {
+  props: {
+    node: {
+      type: Object,
+      default: () => ({})
+    }
+  },
   data() {
     return {
-      rnnType: 'SimpleRNN',  // 默认值改为SimpleRNN
+      rnnType: 'SimpleRNN',
       networkParams: {
         hidden_units: 64,
         num_layers: 1,
@@ -58,16 +61,42 @@ export default {
         batch_size: 32,
         learning_rate: 0.001,
         early_stopping: true
-      }
+      },
+      loading: false,
+      result: null
     }
   },
   methods: {
-    handleSubmit() {
-      this.$emit('submit', {
-        rnn_type: this.rnnType,
-        network_params: this.networkParams,
-        train_params: this.trainParams
-      })
+    ...mapMutations(['setModelType']),
+    
+    async handleSubmit() {
+      this.loading = true;
+      try {
+        const response = await predictRNN({
+          rnn_type: this.rnnType,
+          network_params: this.networkParams,
+          train_params: this.trainParams
+        });
+        
+        if (!response.data || response.data.status === 'error') {
+          throw new Error(response.data?.message || 'RNN预测失败');
+        }
+
+        this.result = {
+          mse: response.data.data.mse || 0,
+          r2_score: response.data.data.r2_score || 0,
+          epochs: response.data.data.epochs || 0
+        };
+        
+        this.$message.success(response.data.message || 'RNN预测完成');
+        this.setModelType('rnn');
+        
+      } catch (error) {
+        const errorMsg = error.response?.data?.message || error.message || 'RNN预测失败';
+        this.$message.error(errorMsg);
+      } finally {
+        this.loading = false;
+      }
     }
   }
 }
@@ -126,6 +155,20 @@ export default {
 .form-footer {
   margin-top: 20px;
   text-align: right;
+}
+
+.result-section {
+  margin-top: 30px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.result-section h4 {
+  margin-top: 0;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
 }
 
 .el-input-number {

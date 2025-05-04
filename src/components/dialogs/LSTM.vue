@@ -7,61 +7,80 @@
       </div>
 
       <!-- 标题 -->
-      <h3 class="dialog-title">LSTM训练设置</h3>
-
-      <div class="form-content">
-        <el-form label-position="top">
-          <el-form-item label="网络结构参数">
-            <el-input-number v-model="networkParams.hidden_size" :min="1" label="隐藏层大小"></el-input-number>
-            <el-input-number v-model="networkParams.num_layers" :min="1" :max="5" label="网络层数"></el-input-number>
-            <el-input-number v-model="networkParams.dropout" :min="0" :max="0.9" :step="0.1" label="Dropout率"></el-input-number>
-          </el-form-item>
-
-          <el-form-item label="训练参数">
-            <el-input-number v-model="trainParams.epochs" :min="1" :max="1000" label="训练轮数"></el-input-number>
-            <el-input-number v-model="trainParams.batch_size" :min="1" :max="1024" label="批大小"></el-input-number>
-            <el-input-number v-model="trainParams.learning_rate" :min="0.0001" :max="1" :step="0.0001" label="学习率"></el-input-number>
-          </el-form-item>
-
-          <el-form-item label="其他参数">
-            <el-checkbox v-model="networkParams.bidirectional">双向LSTM</el-checkbox>
-            <el-checkbox v-model="trainParams.early_stopping">早停机制</el-checkbox>
-          </el-form-item>
-        </el-form>
+      <h3 class="dialog-title">LSTM预测</h3>
+      <div>
+        <el-form-item label="学习率">
+          <el-input-number v-model="learning_rate" :min="0.0001" :max="1" :step="0.0001" label="学习率">
+          </el-input-number>
+        </el-form-item>
       </div>
+
 
       <div class="form-footer">
         <el-button @click="$emit('cancel')">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">开始训练</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="loading">
+          开始预测
+        </el-button>
+      </div>
+
+      <!-- 结果显示区域 -->
+      <div v-if="result" class="result-section">
+        <h4>预测结果</h4>
+        <div>均方误差(MSE): {{ result.mse?.toFixed(4) }}</div>
+        <div>R²得分: {{ result.r2_score?.toFixed(4) }}</div>
+        <div>训练轮数: {{ result.epochs }}</div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { predictLSTM } from '../../api/lstm';
+import { mapMutations } from 'vuex';
+
 export default {
+  props: {
+    node: {
+      type: Object,
+      default: () => ({})
+    }
+  },
   data() {
     return {
-      networkParams: {
-        hidden_size: 64,
-        num_layers: 1,
-        dropout: 0.2,
-        bidirectional: false
-      },
-      trainParams: {
-        epochs: 50,
-        batch_size: 32,
-        learning_rate: 0.001,
-        early_stopping: true
+      learning_rate: 0.001,  // 改为学习率参数
+      loading: false,
+      result: {
+        mse: 0,
+        r2_score: 0,
+        epochs: 0
       }
     }
   },
   methods: {
-    handleSubmit() {
-      this.$emit('submit', {
-        network_params: this.networkParams,
-        train_params: this.trainParams
-      })
+    ...mapMutations(['setModelType']),
+    
+    async handleSubmit() {
+      this.loading = true;
+      try {
+        const response = await predictLSTM({
+          learning_rate: this.learning_rate
+        });
+        this.result = {
+          mse: response.data.data.mse || 0,  // 注意data嵌套层级
+          r2_score: response.data.data.r2_score || 0,
+          epochs: response.data.data.epochs || 0,
+          learning_rate: response.data.data.learning_rate || this.learning_rate
+        };
+        this.$message.success(response.data.message || 'LSTM预测完成');
+        
+        // 预测完成后提交mutations
+        this.setModelType('lstm');
+        
+      } catch (error) {
+        this.$message.error(error.message);
+      } finally {
+        this.loading = false;
+      }
     }
   }
 }
@@ -122,8 +141,17 @@ export default {
   text-align: right;
 }
 
-.el-input-number {
-  margin-right: 15px;
-  margin-bottom: 10px;
+.result-section {
+  margin-top: 30px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.result-section h4 {
+  margin-top: 0;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
 }
 </style>

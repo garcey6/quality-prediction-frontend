@@ -4,7 +4,8 @@ export default createStore({
   state: {
     originalData: null,
     workingData: null,
-    selectedFeatures: []  // 新增已选特征
+    selectedFeatures: [],
+    modelType: '',
   },
   mutations: {
     setOriginalData(state, data) {
@@ -13,13 +14,17 @@ export default createStore({
     setWorkingData(state, data) {
       state.workingData = data
     },
-    setSelectedFeatures(state, features) {  // 新增
+    setSelectedFeatures(state, features) {
       state.selectedFeatures = features
+    },
+    setModelType(state, modelType) {  // 新增
+      state.modelType = modelType
     }
   },
   getters: {
     getOriginalData: state => state.originalData,
     getWorkingData: state => state.workingData,
-    getSelectedFeatures: state => state.selectedFeatures  // 新增
+    getSelectedFeatures: state => state.selectedFeatures,
+    getModelType: state => state.modelType  // 新增
   }
 })

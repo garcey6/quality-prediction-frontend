@@ -1,1 +1,0 @@
-export const trainModel = (data) => axios.post('/train/', data);

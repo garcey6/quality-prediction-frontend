@@ -43,20 +43,18 @@
 
 <script>
 import { getPredictionVisualization, exportPrediction } from '../../api/qualityPrediction'
+import { mapState } from 'vuex';
 
 export default {
-  props: {
-    modelType: {
-      type: String,
-      default: 'pls'
-    }
+  computed: {
+    ...mapState(['modelType'])  // 从Vuex获取modelType
   },
   data() {
     return {
       activeNames: ['1'],
       metricsData: [],
       predictionDetails: '',
-      chartImage: null,  // 改为存储图片URL
+      chartImage: null,
       loading: false
     }
   },
@@ -67,7 +65,7 @@ export default {
     async loadPredictionData() {
       this.loading = true
       try {
-        const response = await getPredictionVisualization(this.modelType)
+        const response = await getPredictionVisualization(this.modelType)  // 使用store中的modelType
 
         // 处理返回的数据
         this.metricsData = [
@@ -92,10 +90,9 @@ export default {
       }
     },
 
-    // 移除initChart方法及相关方法
     async handleExport() {
       try {
-        const response = await exportPrediction(this.modelType)
+        const response = await exportPrediction(this.modelType)  // 使用store中的modelType
         
         // 创建下载链接
         const link = document.createElement('a')

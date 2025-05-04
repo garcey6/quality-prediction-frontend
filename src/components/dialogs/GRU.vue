@@ -1,33 +1,16 @@
 <template>
-  <div class="transformer-modal">
-    <div class="transformer-form">
+  <div class="gru-modal">
+    <div class="gru-form">
       <!-- 关闭按钮 -->
       <div class="close-btn-container">
         <span class="close-btn" @click="$emit('close')">×</span>
       </div>
 
       <!-- 标题 -->
-      <h3 class="dialog-title">Transformer预测</h3>
+      <h3 class="dialog-title">GRU预测</h3>
 
       <div class="form-content">
         <el-form label-position="top">
-          <el-form-item label="网络结构参数">
-            <el-input-number v-model="networkParams.d_model" :min="1" label="模型维度"></el-input-number>
-            <el-input-number v-model="networkParams.nhead" :min="1" label="注意力头数"></el-input-number>
-            <el-input-number v-model="networkParams.num_layers" :min="1" :max="10" label="编码器层数"></el-input-number>
-            <el-input-number v-model="networkParams.dim_feedforward" :min="1" label="前馈网络维度"></el-input-number>
-            <el-input-number v-model="networkParams.dropout" :min="0" :max="0.9" :step="0.1" label="Dropout率"></el-input-number>
-          </el-form-item>
-
-          <el-form-item label="训练参数">
-            <el-input-number v-model="trainParams.epochs" :min="1" :max="1000" label="训练轮数"></el-input-number>
-            <el-input-number v-model="trainParams.batch_size" :min="1" :max="1024" label="批大小"></el-input-number>
-            <el-input-number v-model="trainParams.learning_rate" :min="0.0001" :max="1" :step="0.0001" label="学习率"></el-input-number>
-          </el-form-item>
-
-          <el-form-item label="其他参数">
-            <el-checkbox v-model="trainParams.early_stopping">早停机制</el-checkbox>
-          </el-form-item>
         </el-form>
       </div>
 
@@ -50,7 +33,7 @@
 </template>
 
 <script>
-import { predictTransformer } from '../../api/transformer';
+import { predictGRU } from '../../api/gru';
 import { mapMutations } from 'vuex';
 
 export default {
@@ -63,11 +46,9 @@ export default {
   data() {
     return {
       networkParams: {
-        d_model: 512,
-        nhead: 8,
-        num_layers: 6,
-        dim_feedforward: 2048,
-        dropout: 0.1
+        hidden_units: 64,
+        num_layers: 1,
+        bidirectional: false
       },
       trainParams: {
         epochs: 50,
@@ -85,13 +66,13 @@ export default {
     async handleSubmit() {
       this.loading = true;
       try {
-        const response = await predictTransformer({
+        const response = await predictGRU({
           network_params: this.networkParams,
           train_params: this.trainParams
         });
         
         if (!response.data || response.data.status === 'error') {
-          throw new Error(response.data?.message || 'Transformer预测失败');
+          throw new Error(response.data?.message || 'GRU预测失败');
         }
 
         this.result = {
@@ -100,11 +81,11 @@ export default {
           epochs: response.data.data.epochs || 0
         };
         
-        this.$message.success(response.data.message || 'Transformer预测完成');
-        this.setModelType('transformer');
+        this.$message.success(response.data.message || 'GRU预测完成');
+        this.setModelType('gru');
         
       } catch (error) {
-        const errorMsg = error.response?.data?.message || error.message || 'Transformer预测失败';
+        const errorMsg = error.response?.data?.message || error.message || 'GRU预测失败';
         this.$message.error(errorMsg);
       } finally {
         this.loading = false;
@@ -115,7 +96,7 @@ export default {
 </script>
 
 <style scoped>
-.transformer-modal {
+.gru-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -128,7 +109,7 @@ export default {
   z-index: 1000;
 }
 
-.transformer-form {
+.gru-form {
   background-color: white;
   padding: 20px;
   border-radius: 8px;

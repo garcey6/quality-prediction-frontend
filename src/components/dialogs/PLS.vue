@@ -11,14 +11,6 @@
 
             <div class="form-content">
                 <el-form label-position="top">
-                    <el-form-item label="主成分数量">
-                        <el-input-number v-model="n_components" :min="1" :max="10" label="主成分数量">
-                        </el-input-number>
-                    </el-form-item>
-
-                    <!-- <el-form-item label="当前设置">
-                        <div>主成分数量: {{ n_components }}</div>
-                    </el-form-item> -->
                 </el-form>
             </div>
 
@@ -42,6 +34,7 @@
 
 <script>
 import { predictPLS } from '../../api/pls';
+import { mapMutations } from 'vuex';
 
 export default {
     props: {
@@ -52,20 +45,35 @@ export default {
     },
     data() {
         return {
-            n_components: 2,
             loading: false,
             result: null
         }
     },
     methods: {
+        ...mapMutations(['setModelType']),
+        
         async handleSubmit() {
             this.loading = true;
             try {
-                const response = await predictPLS(this.n_components);
-                this.result = response.data;
+                const response = await predictPLS();
+                
+                if (!response.data || response.data.status === 'error') {
+                    throw new Error(response.data?.message || 'PLS预测失败');
+                }
+
+                // 修改为从response.data.data中获取结果
+                this.result = {
+                    mse: response.data.data.mse || 0,
+                    r2_score: response.data.data.r2_score || 0,
+                    n_components: response.data.data.n_components || 0
+                };
+                
                 this.$message.success('PLS预测完成');
+                this.setModelType('pls');
+                
             } catch (error) {
-                this.$message.error(error.message);
+                const errorMsg = error.response?.data?.message || error.message || 'PLS预测失败';
+                this.$message.error(errorMsg);
             } finally {
                 this.loading = false;
             }

@@ -13,9 +13,10 @@ export const getVariables = () => {
     });
 };
 
-export const selectVariables = (selectedVars) => {
+export const selectVariables = (selectedVars, targetVar) => {
   return api.post('/api/variables/select', {
-    selected_columns: selectedVars 
+    selected_columns: selectedVars,
+    target_variable: targetVar  // 修改参数名为target_variable以匹配后端
   })
   .then(response => response.data)
   .catch(error => {
