@@ -38,12 +38,10 @@ npm install
 ### 开发模式
 npm run 
 
-### 生产构建
-npm run build
-
-### 预览生产版本
-npm run preview
-
 ## 环境要求
 - Node.js 16+
 - npm 8+
+
+## 运行项目
+直接在终端输入npm run dev即可，或者在项目根目录下的脚本执行npm run dev。
+注意：需要先启动后端服务，确保后端服务正常运行。
