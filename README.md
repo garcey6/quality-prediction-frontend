@@ -1,7 +1,9 @@
 # 间歇过程质量预测系统 - 前端
 
 ## 项目简介
-这是一个基于Vue 3 + Vite构建的间歇过程质量预测系统前端项目，用于实现工业间歇生产过程的质量预测和可视化分析。
+这是一个基于Vue 3 + Vite构建的间歇过程质量预测系统前端项目，用于实现工业间歇生产过程的质量预测和可视化分析.
+
+后端项目地址: [quality-prediction-backend](https://github.com/garcey6/quality-prediction-backend.git)
 
 ## 技术栈
 - 前端框架：Vue 3
