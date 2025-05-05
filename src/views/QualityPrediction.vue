@@ -15,13 +15,9 @@
       <ModulePanel @dragStart="handleDragStart" />
 
       <!-- 右侧X6画布 -->
-      <GraphCanvas 
-        ref="graphCanvas" 
-        @drop="handleDrop" 
-        @data-import="handleDataImport"
-        @node-dblclick="handleNodeDblClick"
-        @dragover.prevent />
-      
+      <GraphCanvas ref="graphCanvas" @drop="handleDrop" @data-import="handleDataImport"
+        @node-dblclick="handleNodeDblClick" @dragover.prevent />
+
       <!-- 数据导入弹窗 -->
       <DataImport v-if="isDataImportOpen" :node="selectedNode" @close="isDataImportOpen = false" />
       <!-- 其他弹窗示例 -->
@@ -32,10 +28,11 @@
       <FeatureSelection v-if="isFeatureSelectionOpen" :node="selectedNode" @close="isFeatureSelectionOpen = false" />
       <FeatureExtraction v-if="isFeatureExtractionOpen" :node="selectedNode" @close="isFeatureExtractionOpen = false" />
       <RNN v-if="isRNNOpen" :node="selectedNode" @close="isRNNOpen = false" />
-      <TCN v-if="isTCNOpen" :node="selectedNode" @close="isTCNOpen = false" />
+      <GRU v-if="isGRUOpen" :node="selectedNode" @close="isGRUOpen = false" />
       <LSTM v-if="isLSTMOpen" :node="selectedNode" @close="isLSTMOpen = false" />
       <Transformer v-if="isTransformerOpen" :node="selectedNode" @close="isTransformerOpen = false" />
-      <QualityPredictionForm v-if="isQualityPredictionFormOpen" :node="selectedNode" @close="isQualityPredictionFormOpen = false" />
+      <QualityPredictionForm v-if="isQualityPredictionFormOpen" :node="selectedNode"
+        @close="isQualityPredictionFormOpen = false" />
       <PLS v-if="isPLSOpen" :node="selectedNode" @close="isPLSOpen = false" />
     </div>
   </div>
@@ -53,7 +50,7 @@ import ExceptionHandling from '../components/dialogs/ExceptionHandling.vue'
 import FeatureSelection from '../components/dialogs/FeatureSelection.vue'
 import FeatureExtraction from '../components/dialogs/FeatureExtraction.vue'
 import RNN from '../components/dialogs/RNN.vue'
-import TCN from '../components/dialogs/TCN.vue'
+import GRU from '../components/dialogs/GRU.vue'
 import LSTM from '../components/dialogs/LSTM.vue'
 import Transformer from '../components/dialogs/Transformer.vue'
 import QualityPredictionForm from '../components/dialogs/QualityPredictionForm.vue'
@@ -72,7 +69,7 @@ export default {
     FeatureExtraction,
     PLS,
     RNN,
-    TCN,
+    GRU,
     LSTM,
     Transformer,
     QualityPredictionForm
@@ -88,7 +85,7 @@ export default {
     const isFeatureExtractionOpen = ref(false);
     const isPLSOpen = ref(false);
     const isRNNOpen = ref(false);
-    const isTCNOpen = ref(false);
+    const isGRUOpen = ref(false);
     const isLSTMOpen = ref(false);
     const isTransformerOpen = ref(false);
     const isQualityPredictionFormOpen = ref(false);
@@ -142,8 +139,8 @@ export default {
         case 'RNN':
           isRNNOpen.value = true;
           break;
-        case 'TCN':
-          isTCNOpen.value = true;
+        case 'GRU':
+          isGRUOpen.value = true;
           break;
         case 'LSTM':
           isLSTMOpen.value = true;
@@ -172,7 +169,7 @@ export default {
       isFeatureSelectionOpen,
       isFeatureExtractionOpen,
       isRNNOpen,
-      isTCNOpen,
+      isGRUOpen,
       isLSTMOpen,
       isTransformerOpen,
       isQualityPredictionFormOpen,
@@ -191,6 +188,7 @@ export default {
   font-size: 20px;
   font-weight: bold;
 }
+
 .nav-buttons {
   display: flex;
   gap: 15px;

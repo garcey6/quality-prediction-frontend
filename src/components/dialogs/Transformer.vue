@@ -11,23 +11,7 @@
 
       <div class="form-content">
         <el-form label-position="top">
-          <el-form-item label="网络结构参数">
-            <el-input-number v-model="networkParams.d_model" :min="1" label="模型维度"></el-input-number>
-            <el-input-number v-model="networkParams.nhead" :min="1" label="注意力头数"></el-input-number>
-            <el-input-number v-model="networkParams.num_layers" :min="1" :max="10" label="编码器层数"></el-input-number>
-            <el-input-number v-model="networkParams.dim_feedforward" :min="1" label="前馈网络维度"></el-input-number>
-            <el-input-number v-model="networkParams.dropout" :min="0" :max="0.9" :step="0.1" label="Dropout率"></el-input-number>
-          </el-form-item>
-
-          <el-form-item label="训练参数">
-            <el-input-number v-model="trainParams.epochs" :min="1" :max="1000" label="训练轮数"></el-input-number>
-            <el-input-number v-model="trainParams.batch_size" :min="1" :max="1024" label="批大小"></el-input-number>
-            <el-input-number v-model="trainParams.learning_rate" :min="0.0001" :max="1" :step="0.0001" label="学习率"></el-input-number>
-          </el-form-item>
-
-          <el-form-item label="其他参数">
-            <el-checkbox v-model="trainParams.early_stopping">早停机制</el-checkbox>
-          </el-form-item>
+          <!-- 参数设置部分已移除 -->
         </el-form>
       </div>
 
@@ -43,7 +27,6 @@
         <h4>预测结果</h4>
         <div>均方误差(MSE): {{ result.mse.toFixed(4) }}</div>
         <div>R²得分: {{ result.r2_score.toFixed(4) }}</div>
-        <div>训练轮数: {{ result.epochs }}</div>
       </div>
     </div>
   </div>
@@ -62,19 +45,6 @@ export default {
   },
   data() {
     return {
-      networkParams: {
-        d_model: 512,
-        nhead: 8,
-        num_layers: 6,
-        dim_feedforward: 2048,
-        dropout: 0.1
-      },
-      trainParams: {
-        epochs: 50,
-        batch_size: 32,
-        learning_rate: 0.001,
-        early_stopping: true
-      },
       loading: false,
       result: null
     }
@@ -85,10 +55,7 @@ export default {
     async handleSubmit() {
       this.loading = true;
       try {
-        const response = await predictTransformer({
-          network_params: this.networkParams,
-          train_params: this.trainParams
-        });
+        const response = await predictTransformer();
         
         if (!response.data || response.data.status === 'error') {
           throw new Error(response.data?.message || 'Transformer预测失败');
@@ -96,8 +63,7 @@ export default {
 
         this.result = {
           mse: response.data.data.mse || 0,
-          r2_score: response.data.data.r2_score || 0,
-          epochs: response.data.data.epochs || 0
+          r2_score: response.data.data.r2_score || 0
         };
         
         this.$message.success(response.data.message || 'Transformer预测完成');
@@ -181,10 +147,5 @@ export default {
   color: #333;
   border-bottom: 1px solid #ddd;
   padding-bottom: 8px;
-}
-
-.el-input-number {
-  margin-right: 15px;
-  margin-bottom: 10px;
 }
 </style>

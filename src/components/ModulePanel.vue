@@ -27,7 +27,7 @@ export default {
         { name: '特征提取', icon: '/img/8.png', type: 'featureExtraction' },
         { name: 'PLS', icon: '/img/14.png', type: 'PLS' }, // 新增PLS模块
         { name: 'RNN', icon: '/img/9.png', type: 'RNN' },
-        { name: 'GRU', icon: '/img/10.png', type: 'TCN' },
+        { name: 'GRU', icon: '/img/10.png', type: 'GRU' },
         { name: 'LSTM', icon: '/img/11.png', type: 'LSTM' },
         { name: 'Transformer', icon: '/img/12.png', type: 'Transformer' },
         { name: '质量预测', icon: '/img/13.png', type: 'QualityPrediction' },
