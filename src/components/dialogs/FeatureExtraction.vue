@@ -7,7 +7,7 @@
       </div>
 
       <!-- 标题 -->
-      <h3 class="dialog-title">特征提取设置</h3>
+      <h3 class="dialog-title">数据降维</h3>
 
       <div class="form-content">
         <el-form label-position="top">

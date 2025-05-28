@@ -5,11 +5,11 @@
         <span class="close-btn" @click="$emit('close')">×</span>
       </div>
 
-      <h3 class="dialog-title">数据标准化</h3>
+      <h3 class="dialog-title">数据归一化</h3>
 
       <div class="form-content">
         <el-form label-position="top">
-          <el-form-item label="标准化方法">
+          <el-form-item label="归一化方法">
             <el-select v-model="selectedMethod">
               <el-option 
                 label="Min-Max归一化" 
@@ -49,7 +49,7 @@ export default {
       try {
         const response = await standardizeData(this.selectedMethod);
         
-        this.$message.success('数据标准化已应用');
+        this.$message.success('数据归一化已应用');
         this.$emit('submit', {
           success: true,
           message: response.message

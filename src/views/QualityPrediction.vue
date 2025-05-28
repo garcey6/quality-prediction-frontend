@@ -28,7 +28,7 @@
       <FeatureSelection v-if="isFeatureSelectionOpen" :node="selectedNode" @close="isFeatureSelectionOpen = false" />
       <FeatureExtraction v-if="isFeatureExtractionOpen" :node="selectedNode" @close="isFeatureExtractionOpen = false" />
       <RNN v-if="isRNNOpen" :node="selectedNode" @close="isRNNOpen = false" />
-      <GRU v-if="isGRUOpen" :node="selectedNode" @close="isGRUOpen = false" />
+      <TCN v-if="isTCNOpen" :node="selectedNode" @close="isTCNOpen = false" />     
       <LSTM v-if="isLSTMOpen" :node="selectedNode" @close="isLSTMOpen = false" />
       <Transformer v-if="isTransformerOpen" :node="selectedNode" @close="isTransformerOpen = false" />
       <QualityPredictionForm v-if="isQualityPredictionFormOpen" :node="selectedNode"
@@ -50,7 +50,7 @@ import ExceptionHandling from '../components/dialogs/ExceptionHandling.vue'
 import FeatureSelection from '../components/dialogs/FeatureSelection.vue'
 import FeatureExtraction from '../components/dialogs/FeatureExtraction.vue'
 import RNN from '../components/dialogs/RNN.vue'
-import GRU from '../components/dialogs/GRU.vue'
+import TCN from '../components/dialogs/TCN.vue'
 import LSTM from '../components/dialogs/LSTM.vue'
 import Transformer from '../components/dialogs/Transformer.vue'
 import QualityPredictionForm from '../components/dialogs/QualityPredictionForm.vue'
@@ -69,7 +69,7 @@ export default {
     FeatureExtraction,
     PLS,
     RNN,
-    GRU,
+    TCN,
     LSTM,
     Transformer,
     QualityPredictionForm
@@ -85,7 +85,7 @@ export default {
     const isFeatureExtractionOpen = ref(false);
     const isPLSOpen = ref(false);
     const isRNNOpen = ref(false);
-    const isGRUOpen = ref(false);
+    const isTCNOpen = ref(false);
     const isLSTMOpen = ref(false);
     const isTransformerOpen = ref(false);
     const isQualityPredictionFormOpen = ref(false);
@@ -139,8 +139,8 @@ export default {
         case 'RNN':
           isRNNOpen.value = true;
           break;
-        case 'GRU':
-          isGRUOpen.value = true;
+        case 'TCN':
+          isTCNOpen.value = true;
           break;
         case 'LSTM':
           isLSTMOpen.value = true;
@@ -169,7 +169,7 @@ export default {
       isFeatureSelectionOpen,
       isFeatureExtractionOpen,
       isRNNOpen,
-      isGRUOpen,
+      isTCNOpen,
       isLSTMOpen,
       isTransformerOpen,
       isQualityPredictionFormOpen,
@@ -221,7 +221,7 @@ export default {
   align-items: center;
   padding: 0 20px;
   height: 60px;
-  background-color: #1e90ff;
+  background-color: #e05702;
   color: white;
 }
 

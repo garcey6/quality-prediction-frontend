@@ -1,13 +1,13 @@
 <template>
-  <div class="gru-modal">
-    <div class="gru-form">
+  <div class="tcn-modal">
+    <div class="tcn-form">
       <!-- 关闭按钮 -->
       <div class="close-btn-container">
         <span class="close-btn" @click="$emit('close')">×</span>
       </div>
 
       <!-- 标题 -->
-      <h3 class="dialog-title">GRU预测</h3>
+      <h3 class="dialog-title">TCN预测</h3>
 
       <div class="form-content">
         <el-form label-position="top">
@@ -33,7 +33,7 @@
 </template>
 
 <script>
-import { predictGRU } from '../../api/gru';
+import { predictTCN } from '../../api/tcn';
 import { mapMutations } from 'vuex';
 
 export default {
@@ -66,13 +66,13 @@ export default {
     async handleSubmit() {
       this.loading = true;
       try {
-        const response = await predictGRU({
+        const response = await predictTCN({
           network_params: this.networkParams,
           train_params: this.trainParams
         });
         
         if (!response.data || response.data.status === 'error') {
-          throw new Error(response.data?.message || 'GRU预测失败');
+          throw new Error(response.data?.message || 'TCN预测失败');
         }
 
         this.result = {
@@ -81,11 +81,11 @@ export default {
           epochs: response.data.data.epochs || 0
         };
         
-        this.$message.success(response.data.message || 'GRU预测完成');
-        this.setModelType('gru');
+        this.$message.success(response.data.message || 'TCN预测完成');
+        this.setModelType('tcn');
         
       } catch (error) {
-        const errorMsg = error.response?.data?.message || error.message || 'GRU预测失败';
+        const errorMsg = error.response?.data?.message || error.message || 'TCN预测失败';
         this.$message.error(errorMsg);
       } finally {
         this.loading = false;
@@ -96,7 +96,7 @@ export default {
 </script>
 
 <style scoped>
-.gru-modal {
+.tcn-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -109,7 +109,7 @@ export default {
   z-index: 1000;
 }
 
-.gru-form {
+.tcn-form {
   background-color: white;
   padding: 20px;
   border-radius: 8px;

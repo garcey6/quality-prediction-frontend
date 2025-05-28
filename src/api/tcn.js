@@ -7,15 +7,15 @@ const api = axios.create({
   }
 });
 
-export const predictGRU = (params) => {
-  return api.post('/api/gru/predict', params)
+export const predictTCN = (params) => {
+  return api.post('/api/tcn/predict', params)
     .then(response => {
       return {
         data: response.data
       };
     })
     .catch(error => {
-      console.error('GRU预测失败:', error);
+      console.error('TCN预测失败:', error);
       throw error;
     });
 };

@@ -7,21 +7,11 @@
       </div>
 
       <!-- 标题 -->
-      <h3 class="dialog-title">特征选择设置</h3>
+      <h3 class="dialog-title">特征选择</h3>
 
       <div class="form-content">
+        <!-- 相关系数阈值滑块 -->
         <el-form label-position="top">
-          <el-form-item label="选择目标变量">
-            <el-select v-model="targetVariable" placeholder="请选择目标变量">
-              <el-option
-                v-for="item in variables"
-                :key="item"
-                :label="item"
-                :value="item">
-              </el-option>
-            </el-select>
-          </el-form-item>
-
           <el-form-item label="相关系数阈值">
             <el-slider
               v-model.number="correlationThreshold"
@@ -33,66 +23,64 @@
             <span style="margin-left: 10px">当前阈值: {{ correlationThreshold.toFixed(2) }}</span>
           </el-form-item>
         </el-form>
+
+        <!-- 相关热力图 -->
+        <div class="chart-container" v-if="heatmapImage">
+          <h4>变量相关热力图</h4>
+          <img :src="heatmapImage" style="width: 100%; max-height: 500px; object-fit: contain;">
+        </div>
       </div>
 
       <div class="form-footer">
         <el-button @click="$emit('cancel')">取消</el-button>
         <el-button 
-                  type="primary" 
-                  @click="handleSubmit"
-                  :loading="loading">
-                  确认
-                </el-button>
+          type="primary" 
+          @click="handleSubmit"
+          :loading="loading">
+          确认
+        </el-button>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { getVariables, selectFeatures } from '../../api/featureSelection';
+import { getHeatmap, selectFeatures } from '../../api/featureSelection';
 
 export default {
   data() {
     return {
-      targetVariable: '',
-      variables: [], // 只存储变量名数组
+      heatmapImage: null,
       correlationThreshold: 0.5,
       loading: false
     }
   },
   async mounted() {
-    try {
-      this.variables = await getVariables(); // 直接使用API返回的变量名数组
-      
-      if (this.variables.length === 0) {
-        this.$message.warning('未获取到可用变量');
-      }
-    } catch (error) {
-      this.$message.error(error.message);
-      console.error('获取变量错误:', error);
-    }
+    await this.loadHeatmap();
   },
   methods: {
-    async handleSubmit() {
-      if (!this.targetVariable) {
-        this.$message.error('请选择目标变量');
-        return;
-      }
-      
+    async loadHeatmap() {
       this.loading = true;
       try {
-        const response = await selectFeatures(
-          this.targetVariable,
-          this.correlationThreshold
-        );
-        
+        const response = await getHeatmap();
+        if (response && response.image) {
+          this.heatmapImage = `data:image/png;base64,${response.image}`;
+        }
+      } catch (error) {
+        this.$message.error('加载热力图失败: ' + error.message);
+      } finally {
+        this.loading = false;
+      }
+    },
+    async handleSubmit() {
+      this.loading = true;
+      try {
+        const response = await selectFeatures(this.correlationThreshold);
         this.$message.success(response.message);
         this.$emit('submit', {
-          targetVariable: this.targetVariable,
           correlationThreshold: this.correlationThreshold,
           selectedFeatures: response.selected_features
         });
-        
       } catch (error) {
         this.$message.error(error.message);
       } finally {
@@ -156,5 +144,20 @@ export default {
 .form-footer {
   margin-top: 20px;
   text-align: right;
+}
+
+.chart-container {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f8f8f8;
+  border-radius: 4px;
+  border: 1px solid #eee;
+}
+
+.chart-container h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
+  color: #333;
 }
 </style>

@@ -18,9 +18,8 @@ export const getVariables = () => {
     });
 };
 
-export const selectFeatures = (targetVariable, threshold) => {
+export const selectFeatures = (threshold) => {
   return api.post('/api/feature-selection/select', {
-    target_variable: targetVariable,
     threshold: threshold
   })
   .then(response => response.data)
@@ -28,4 +27,18 @@ export const selectFeatures = (targetVariable, threshold) => {
     console.error('特征选择失败:', error);
     throw new Error(error.response?.data?.message || '特征选择失败');
   });
+};
+
+export const getHeatmap = () => {
+  return api.get('/api/feature-selection/heatmap')
+    .then(response => {
+      if (!response.data || !response.data.image) {
+        throw new Error('获取热力图数据格式不正确');
+      }
+      return response.data;
+    })
+    .catch(error => {
+      console.error('获取热力图失败:', error);
+      throw new Error(error.response?.data?.message || '获取热力图失败');
+    });
 };

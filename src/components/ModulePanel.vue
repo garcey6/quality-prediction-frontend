@@ -18,16 +18,16 @@ export default {
   data() {
     return {
       moduleTemplates: [
-        { name: '数据导入', icon: '/img/2.png', type: 'dataImport' },
-        { name: '变量选择', icon: '/img/4.png', type: 'variableSelect' },
-        { name: '异常处理', icon: '/img/1.png', type: 'exceptionHandling' },
-        { name: '标准化', icon: '/img/5.png', type: 'standardization' },
-        { name: '数据可视化', icon: '/img/6.png', type: 'dataVisualization' },
-        { name: '特征选择', icon: '/img/7.png', type: 'featureSelection' },
-        { name: '特征提取', icon: '/img/8.png', type: 'featureExtraction' },
-        { name: 'PLS', icon: '/img/14.png', type: 'PLS' }, // 新增PLS模块
+        { name: '数据导入', icon: '/img/1.png', type: 'dataImport' },
+        { name: '目标变量选择', icon: '/img/2.png', type: 'variableSelect' },
+        { name: '数据填充', icon: '/img/3.png', type: 'exceptionHandling' },
+        { name: '数据可视化', icon: '/img/4.png', type: 'dataVisualization' },
+        { name: '数据归一化', icon: '/img/5.png', type: 'standardization' },
+        { name: '特征选择', icon: '/img/6.png', type: 'featureSelection' },
+        { name: '数据降维', icon: '/img/7.png', type: 'featureExtraction' },
+        { name: 'PLS', icon: '/img/8.png', type: 'PLS' }, // 新增PLS模块
         { name: 'RNN', icon: '/img/9.png', type: 'RNN' },
-        { name: 'GRU', icon: '/img/10.png', type: 'GRU' },
+        { name: 'TCN', icon: '/img/10.png', type: 'TCN' },
         { name: 'LSTM', icon: '/img/11.png', type: 'LSTM' },
         { name: 'Transformer', icon: '/img/12.png', type: 'Transformer' },
         { name: '质量预测', icon: '/img/13.png', type: 'QualityPrediction' },

@@ -12,14 +12,21 @@
       <div class="result-content">
         <!-- 预测结果图表 -->
         <div class="chart-container" v-if="chartImage">
+          <h4>预测对比图</h4>
           <img :src="chartImage" style="width: 100%; max-height: 500px; object-fit: contain;">
+        </div>
+
+        <!-- 残差图 -->
+        <div class="chart-container" v-if="residualImage">
+          <h4>残差图</h4>
+          <img :src="residualImage" style="width: 100%; max-height: 500px; object-fit: contain;">
         </div>
 
         <!-- 预测详情 -->
         <div class="detail-container">
           <el-collapse v-model="activeNames">
             <el-collapse-item title="预测详情" name="1">
-              <!-- 预测指标 (移动到预测详情下方) -->
+              <!-- 预测指标 -->
               <div class="metrics-container">
                 <el-table :data="metricsData" border style="width: 100%">
                   <el-table-column prop="name" label="评估指标" width="180"></el-table-column>
@@ -29,8 +36,6 @@
             </el-collapse-item>
           </el-collapse>
         </div>
-
-
       </div>
 
       <div class="form-footer">
@@ -47,7 +52,7 @@ import { mapState } from 'vuex';
 
 export default {
   computed: {
-    ...mapState(['modelType'])  // 从Vuex获取modelType
+    ...mapState(['modelType'])
   },
   data() {
     return {
@@ -55,6 +60,7 @@ export default {
       metricsData: [],
       predictionDetails: '',
       chartImage: null,
+      residualImage: null,  // 新增残差图
       loading: false
     }
   },
@@ -65,7 +71,7 @@ export default {
     async loadPredictionData() {
       this.loading = true
       try {
-        const response = await getPredictionVisualization(this.modelType)  // 使用store中的modelType
+        const response = await getPredictionVisualization(this.modelType)
 
         // 处理返回的数据
         this.metricsData = [
@@ -78,10 +84,15 @@ export default {
 
         this.predictionDetails = JSON.stringify(response, null, 2)
 
-        // 确保图片数据格式正确
+        // 处理预测对比图
         this.chartImage = response.image.startsWith('data:image')
           ? response.image
           : `data:image/png;base64,${response.image}`
+
+        // 处理残差图
+        this.residualImage = response.residual_image.startsWith('data:image')
+          ? response.residual_image
+          : `data:image/png;base64,${response.residual_image}`
 
       } catch (error) {
         this.$message.error('加载预测结果失败: ' + error.message)
@@ -92,7 +103,7 @@ export default {
 
     async handleExport() {
       try {
-        const response = await exportPrediction(this.modelType)  // 使用store中的modelType
+        const response = await exportPrediction(this.modelType)
         
         // 创建下载链接
         const link = document.createElement('a')
@@ -162,7 +173,17 @@ export default {
 }
 
 .chart-container {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  border: 1px solid #eee;
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.chart-container h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  text-align: center;
+  color: #333;
 }
 
 .metrics-container {

@@ -5,27 +5,20 @@
       <div class="close-btn-container">
         <span class="close-btn" @click="$emit('close')">×</span>
       </div>
-      
-      <el-transfer
-        v-model="selectedVariables"
-        :data="variables"
-        filterable
-        :titles="['可选变量', '已选变量']">
+      <!-- 添加对话框标题 -->
+      <h3 class="dialog-title">目标变量选择</h3>
+      <el-transfer v-model="selectedVariables" :data="variables" filterable :titles="['可选变量', '已选变量']">
       </el-transfer>
-      
+
       <!-- 添加目标变量选择区域 -->
       <div v-if="selectedVariables.length > 0" class="target-select">
         <h4>选择目标变量</h4>
         <el-select v-model="targetVariable" placeholder="请选择目标变量">
-          <el-option
-            v-for="varId in selectedVariables"
-            :key="varId"
-            :label="getVariableName(varId)"
-            :value="varId">
+          <el-option v-for="varId in selectedVariables" :key="varId" :label="getVariableName(varId)" :value="varId">
           </el-option>
         </el-select>
       </div>
-      
+
       <div class="form-footer">
         <el-button @click="$emit('cancel')">取消</el-button>
         <el-button type="primary" @click="handleSubmit">确认</el-button>
@@ -70,7 +63,7 @@ export default {
         if (!this.targetVariable && this.selectedVariables.length > 0) {
           throw new Error('请选择目标变量');
         }
-        
+
         // 获取变量名而不是ID
         const varNames = this.selectedVariables
           .filter(v => v !== null && v !== undefined)
@@ -79,17 +72,17 @@ export default {
             return variable ? variable.label : null; // 使用label(变量名)而不是key(ID)
           })
           .filter(v => v !== null);
-        
+
         if (varNames.length === 0) {
           throw new Error('请至少选择一个变量');
         }
-        
+
         // 获取目标变量名
-        const targetVarName = this.targetVariable ? 
+        const targetVarName = this.targetVariable ?
           this.getVariableName(this.targetVariable) : null;
-        
+
         const response = await selectVariables(varNames, targetVarName);  // 添加目标变量参数
-        
+
         this.$message.success('变量选择已应用');
         this.$emit('submit', {
           success: true,
@@ -113,6 +106,11 @@ export default {
 </script>
 
 <style scoped>
+.dialog-title {
+  margin: 0 0 20px 0;
+  text-align: center;
+  color: #333;
+}
 .variable-select-modal {
   position: fixed;
   top: 0;
@@ -134,7 +132,8 @@ export default {
   max-height: 80vh;
   overflow: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  position: relative; /* 为关闭按钮定位做准备 */
+  position: relative;
+  /* 为关闭按钮定位做准备 */
 }
 
 /* 添加关闭按钮样式 */
